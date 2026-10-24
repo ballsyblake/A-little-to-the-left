@@ -1,0 +1,102 @@
+/* ---- Palette: soft pastels, defined once as tokens ---- */
+:root {
+  --bg: #f6efe6;
+  --surface: #fffaf3;
+  --ink: #5b5149;
+  --muted: #a3968a;
+  --slot: #ece1d3;
+  --slot-edge: #dccfbe;
+  --slot-hot: #cfe5d6;
+  --accent: #9cc5b0;
+  --shadow: rgba(91, 81, 73, 0.18);
+  --radius: 18px;
+}
+
+* { box-sizing: border-box; }
+
+/* Lock the page: no scroll, no pull-to-refresh, no rubber-band bounce. */
+html, body {
+  margin: 0;
+  height: 100%;
+  overflow: hidden;
+  overscroll-behavior: none;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: ui-rounded, "SF Pro Rounded", "Nunito", system-ui, sans-serif;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+/* Portrait column, centred, capped at ~480px. dvh = visible viewport. */
+#app {
+  height: 100dvh;
+  max-width: 480px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  padding: max(16px, env(safe-area-inset-top)) 16px max(16px, env(safe-area-inset-bottom));
+  gap: 12px;
+}
+
+.title {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 700;
+  text-align: center;
+}
+
+.hint {
+  margin: 0;
+  text-align: center;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+/* The play area. touch-action:none hands every touch to our pointer code. */
+.board {
+  position: relative;
+  flex: 1;
+  background: var(--surface);
+  border-radius: var(--radius);
+  box-shadow: inset 0 0 0 2px var(--slot-edge);
+  touch-action: none;
+  overflow: hidden;
+}
+
+/* A slot: a soft rounded well an object can rest in. */
+.slot {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  background: var(--slot);
+  border-radius: 14px;
+  box-shadow: inset 0 2px 4px var(--shadow);
+  transition: background-color 120ms ease;
+}
+.slot.is-hot { background: var(--slot-hot); }
+
+/* A draggable object. Positioned by its centre via --x/--y custom props. */
+.piece {
+  position: absolute;
+  left: 0;
+  top: 0;
+  min-width: 44px;   /* minimum touch target */
+  min-height: 44px;
+  display: grid;
+  place-items: center;
+  transform: translate(var(--x), var(--y)) translate(-50%, -50%) rotate(var(--rot, 0deg)) scale(var(--lift, 1));
+  transition: transform 180ms cubic-bezier(.2, .8, .3, 1.2), filter 180ms ease;
+  filter: drop-shadow(0 2px 2px var(--shadow));
+  cursor: grab;
+  touch-action: none;
+}
+.piece svg { display: block; pointer-events: none; }
+
+/* While held: no transition (must track the finger 1:1), bigger + deeper shadow. */
+.piece.is-dragging {
+  --lift: 1.08;
+  transition: filter 180ms ease;
+  filter: drop-shadow(0 10px 8px var(--shadow));
+  cursor: grabbing;
+  z-index: 10;
+}
