@@ -7,3 +7,5 @@ npm install
 npm run dev -- --host   # open the printed "Network" URL on your phone (same Wi-Fi)
 npm run typecheck
 ```
+
+Live build: https://ballsyblake.github.io/A-little-to-the-left/ (deployed by `.github/workflows/pages.yml`).
