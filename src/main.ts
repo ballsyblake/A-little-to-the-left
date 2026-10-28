@@ -1,26 +1,20 @@
-// Entry point. Stage 1: a sandbox with one draggable pencil and three slots.
+// Entry point: decides which screen is showing.
 import './style.css';
-import { createBoard } from './engine/board';
-import { pencil } from './levels/art';
+import { LEVELS } from './levels';
+import { showGame } from './ui/screens';
 
 const app = document.querySelector<HTMLDivElement>('#app')!;
+let cleanup: (() => void) | null = null;
 
-const title = document.createElement('h1');
-title.className = 'title';
-title.textContent = 'Just So';
+function play(index: number): void {
+  cleanup?.();
+  cleanup = showGame(app, {
+    level: LEVELS[index],
+    levelNumber: index + 1,
+    onSolved: () => {},  // progress saving arrives in stage 3
+    // Wraps to the first level until more levels exist.
+    onNext: () => play((index + 1) % LEVELS.length),
+  });
+}
 
-const hint = document.createElement('p');
-hint.className = 'hint';
-hint.textContent = 'Drag the pencil into a slot.';
-
-const board = createBoard({
-  snapRadius: 60,
-  slots: [0.3, 0.45, 0.6].map((y, i) => ({ id: `s${i}`, x: 0.5, y, w: 220, h: 32 })),
-  pieces: [{ id: 'p0', svg: pencil(180), start: { x: 0.5, y: 0.85 } }],
-  onChange(_pieces, event) {
-    hint.textContent = event === 'snap' ? 'Snapped. Try another slot.' : 'Close, but not in a slot.';
-    if (event === 'snap') navigator.vibrate?.(10); // haptic tick where supported
-  },
-});
-
-app.append(title, hint, board.el);
+play(0);

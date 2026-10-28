@@ -9,12 +9,16 @@ export interface SlotDef {
   h: number; // px
 }
 
+/** Facts about a piece that win rules can inspect (length, hue, type...). */
+export type PieceProps = Record<string, number | string>;
+
 export interface PieceDef {
   id: string;
   /** Inline SVG markup for the object's art. */
   svg: string;
-  /** Where it starts, normalised like slots. */
-  start: { x: number; y: number };
+  /** Where it starts, normalised like slots; `rot` = starting tilt in degrees. */
+  start: { x: number; y: number; rot?: number };
+  props?: PieceProps;
   rotatable?: boolean;
 }
 
@@ -24,6 +28,29 @@ export interface PieceState {
   el: HTMLElement;
   x: number;           // current centre, normalised 0..1 (survives resizes)
   y: number;
-  rotation: number;    // degrees, multiples of 90
+  rotation: number;    // degrees; snapped pieces sit on a multiple of 90
   slotId: string | null;
+}
+
+/** Read-only view of the board handed to win rules. */
+export interface BoardView {
+  slots: SlotDef[];
+  pieces: PieceState[];
+  /** The piece resting in a slot, if any. */
+  pieceIn(slotId: string): PieceState | undefined;
+}
+
+/** A win rule is just a predicate: "is the board solved under this rule?" */
+export type WinRule = (board: BoardView) => boolean;
+
+/** Everything needed to play one level. Pure data plus rule functions. */
+export interface LevelConfig {
+  id: string;
+  name: string;
+  hint: string;
+  snapRadius: number;
+  slots: SlotDef[];
+  pieces: PieceDef[];
+  /** The level is solved when ANY rule passes (= multiple valid solutions). */
+  rules: WinRule[];
 }

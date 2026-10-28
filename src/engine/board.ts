@@ -12,6 +12,8 @@ export interface BoardOptions {
 export interface Board {
   el: HTMLElement;
   pieces: PieceState[];
+  /** Stop all input (e.g. once the level is solved). */
+  lock(): void;
   destroy(): void;
 }
 
@@ -37,7 +39,7 @@ export function createBoard(opts: BoardOptions): Board {
     pe.className = 'piece';
     pe.innerHTML = def.svg;
     el.append(pe);
-    return { def, el: pe, x: def.start.x, y: def.start.y, rotation: 0, slotId: null };
+    return { def, el: pe, x: def.start.x, y: def.start.y, rotation: def.start.rot ?? 0, slotId: null };
   });
 
   let hot: string | null = null;
@@ -65,6 +67,7 @@ export function createBoard(opts: BoardOptions): Board {
   return {
     el,
     pieces,
+    lock: () => el.classList.add('is-locked'),
     destroy() {
       ro.disconnect();
       unbinds.forEach((u) => u());

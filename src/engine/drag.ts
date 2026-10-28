@@ -55,6 +55,7 @@ export function makeDraggable(piece: PieceState, ctx: DragContext): () => void {
         piece.x = sc.x / board.clientWidth;
         piece.y = sc.y / board.clientHeight;
         piece.slotId = slot.id;
+        piece.rotation = Math.round(piece.rotation / 90) * 90; // straighten
       } else {
         // No slot nearby: rest where dropped, kept inside the board.
         piece.x = Math.min(0.95, Math.max(0.05, piece.x));
