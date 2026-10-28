@@ -9,3 +9,5 @@ npm run typecheck
 ```
 
 Live build: https://ballsyblake.github.io/A-little-to-the-left/ (deployed by `.github/workflows/pages.yml`).
+Every push to the working branch or `main` redeploys; to redeploy manually use
+Actions > Deploy to GitHub Pages > Run workflow.
