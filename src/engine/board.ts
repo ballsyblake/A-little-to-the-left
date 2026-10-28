@@ -1,10 +1,11 @@
 // Builds the board DOM (slots + pieces) and owns the live piece state.
 import { makeDraggable, render } from './drag';
-import type { PieceDef, PieceState, SlotDef } from './types';
+import type { AreaDef, PieceDef, PieceState, SlotDef } from './types';
 
 export interface BoardOptions {
   slots: SlotDef[];
   pieces: PieceDef[];
+  areas?: AreaDef[];
   snapRadius: number;
   onChange?(pieces: PieceState[], event: 'snap' | 'drop' | 'rotate'): void;
 }
@@ -21,7 +22,18 @@ export function createBoard(opts: BoardOptions): Board {
   const el = document.createElement('div');
   el.className = 'board';
 
-  // Slots first so pieces render on top of them.
+  // Draw order: areas, then slots, then pieces on top.
+  for (const a of opts.areas ?? []) {
+    const ae = document.createElement('div');
+    ae.className = `area ${a.className ?? ''}`;
+    ae.style.left = `${(a.x - a.w / 2) * 100}%`;
+    ae.style.top = `${a.y * 100}%`;
+    ae.style.width = `${a.w * 100}%`;
+    ae.style.height = a.hPx ? `${a.hPx}px` : `${a.h * 100}%`;
+    ae.style.transform = 'translateY(-50%)'; // centre vertically either way
+    el.append(ae);
+  }
+
   const slotEls = new Map<string, HTMLElement>();
   for (const s of opts.slots) {
     const se = document.createElement('div');

@@ -33,3 +33,37 @@ export function orderedBy(prop: string, dir: 'asc' | 'desc'): WinRule {
 export function orderedEitherWay(prop: string): WinRule[] {
   return [orderedBy(prop, 'asc'), orderedBy(prop, 'desc')];
 }
+
+/** Passes only when every given rule passes. */
+export function all(...rules: WinRule[]): WinRule {
+  return (b) => rules.every((r) => r(b));
+}
+
+/**
+ * Slots are grouped (slot.group, e.g. a drawer compartment). Passes when all
+ * slots are filled, each group holds a single value of `prop`, and no two
+ * groups share a value. Which group gets which value doesn't matter.
+ */
+export function groupedBy(prop: string): WinRule {
+  return (b) => {
+    if (!allFilled(b)) return false;
+    const valueOf = new Map<string, string | number>(); // group -> its value
+    for (const s of b.slots) {
+      const v = b.pieceIn(s.id)!.def.props?.[prop];
+      if (v === undefined) return false;
+      const g = s.group ?? s.id;
+      if (!valueOf.has(g)) valueOf.set(g, v);
+      else if (valueOf.get(g) !== v) return false;
+    }
+    return new Set(valueOf.values()).size === valueOf.size;
+  };
+}
+
+/** Every slotted piece faces the same way (rotation compared mod 360). */
+export const sameRotation: WinRule = (b) => {
+  const turns = b.slots
+    .map((s) => b.pieceIn(s.id))
+    .filter((p): p is PieceState => !!p)
+    .map((p) => ((p.rotation % 360) + 360) % 360);
+  return turns.every((t) => t === turns[0]);
+};

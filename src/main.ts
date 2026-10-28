@@ -1,20 +1,28 @@
-// Entry point: decides which screen is showing.
+// Entry point: a tiny router that swaps between screens.
 import './style.css';
 import { LEVELS } from './levels';
-import { showGame } from './ui/screens';
+import { loadSolved, markSolved } from './ui/progress';
+import { showGame, showLevelSelect } from './ui/screens';
 
 const app = document.querySelector<HTMLDivElement>('#app')!;
-let cleanup: (() => void) | null = null;
+let cleanup: () => void = () => {};
+
+function levelSelect(): void {
+  cleanup();
+  cleanup = showLevelSelect(app, { levels: LEVELS, solved: loadSolved(), onPick: play });
+}
 
 function play(index: number): void {
-  cleanup?.();
+  cleanup();
+  const level = LEVELS[index];
   cleanup = showGame(app, {
-    level: LEVELS[index],
+    level,
     levelNumber: index + 1,
-    onSolved: () => {},  // progress saving arrives in stage 3
-    // Wraps to the first level until more levels exist.
-    onNext: () => play((index + 1) % LEVELS.length),
+    onSolved: () => markSolved(level.id),
+    // After the last level, go back to the level list.
+    onNext: () => (index + 1 < LEVELS.length ? play(index + 1) : levelSelect()),
+    onBack: levelSelect,
   });
 }
 
-play(0);
+levelSelect();

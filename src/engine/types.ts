@@ -7,6 +7,19 @@ export interface SlotDef {
   y: number; // centre, 0..1 of board height
   w: number; // px
   h: number; // px
+  /** Slots sharing a group form one container, e.g. a drawer compartment. */
+  group?: string;
+}
+
+/** Purely visual backdrop (shelf, tray compartment). Fully normalised. */
+export interface AreaDef {
+  x: number; // centre
+  y: number;
+  w: number; // fraction of board width
+  h: number; // fraction of board height
+  /** Fixed height in px instead of `h`, for backdrops that must hug pieces. */
+  hPx?: number;
+  className?: string;
 }
 
 /** Facts about a piece that win rules can inspect (length, hue, type...). */
@@ -51,6 +64,7 @@ export interface LevelConfig {
   snapRadius: number;
   slots: SlotDef[];
   pieces: PieceDef[];
+  areas?: AreaDef[];
   /** The level is solved when ANY rule passes (= multiple valid solutions). */
   rules: WinRule[];
 }

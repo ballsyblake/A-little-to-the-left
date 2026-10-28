@@ -23,6 +23,8 @@ export function render(piece: PieceState, board: HTMLElement): void {
   piece.el.style.setProperty('--rot', `${piece.rotation}deg`);
 }
 
+let topZ = 1; // last-touched piece sits on top of the others
+
 export function makeDraggable(piece: PieceState, ctx: DragContext): () => void {
   const { board } = ctx;
   let offset: Point = { x: 0, y: 0 }; // finger position minus piece centre
@@ -35,6 +37,7 @@ export function makeDraggable(piece: PieceState, ctx: DragContext): () => void {
     onDragStart(p) {
       offset = { x: p.x - piece.x * board.clientWidth, y: p.y - piece.y * board.clientHeight };
       piece.slotId = null; // lifted out of its slot
+      piece.el.style.zIndex = String(++topZ);
       piece.el.classList.add('is-dragging');
     },
 
@@ -67,7 +70,8 @@ export function makeDraggable(piece: PieceState, ctx: DragContext): () => void {
 
     onTap() {
       if (!piece.def.rotatable) return;
-      piece.rotation += 90; // keep counting up so CSS always spins clockwise
+      // Straighten any tilt, then turn. Counting up keeps CSS spinning clockwise.
+      piece.rotation = Math.round(piece.rotation / 90) * 90 + 90;
       render(piece, board);
       ctx.onChange(piece, 'rotate');
     },

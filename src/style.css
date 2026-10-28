@@ -64,6 +64,24 @@ html, body {
   overflow: hidden;
 }
 
+/* Decorative backdrops: shelves, tray compartments. */
+.area {
+  position: absolute;
+  border-radius: var(--radius);
+  background: #f1e6d8;
+  box-shadow: inset 0 0 0 2px var(--slot-edge);
+}
+.area.shelf { background: #efe3d2; border-radius: 10px; }
+.area.shelf::after { /* the plank the books stand on */
+  content: '';
+  position: absolute;
+  left: -6px; right: -6px; bottom: -8px;
+  height: 14px;
+  border-radius: 7px;
+  background: #d8c3a8;
+}
+.area.compartment { background: #eadfce; }
+
 /* A slot: a soft rounded well an object can rest in. */
 .slot {
   position: absolute;
@@ -98,7 +116,7 @@ html, body {
   transition: filter 180ms ease;
   filter: drop-shadow(0 10px 8px var(--shadow));
   cursor: grabbing;
-  z-index: 10;
+  z-index: 9999 !important; /* above the inline stacking order while held */
 }
 
 /* Solved: pieces stop responding to touch. */
@@ -128,3 +146,62 @@ html, body {
 }
 .btn:active { transform: translateY(1px); }
 .btn[hidden] { display: none; }
+
+/* Game header: back button left, title centred, equal empty column right
+   so the title is centred without ever overlapping the button. */
+.header {
+  display: grid;
+  grid-template-columns: 72px 1fr 72px;
+  align-items: center;
+  gap: 4px;
+  min-height: 44px;
+}
+.header .title { font-size: 1.1rem; }
+.btn-back {
+  min-height: 44px;
+  padding: 0 14px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--slot);
+  color: var(--ink);
+  font: inherit;
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+
+/* Level select */
+.title-big { font-size: 2rem; margin-top: 12vh; }
+.level-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 24px;
+}
+.level-card {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-height: 64px;
+  padding: 0 18px;
+  border: 0;
+  border-radius: var(--radius);
+  background: var(--surface);
+  box-shadow: 0 3px 10px var(--shadow);
+  color: var(--ink);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.level-card:disabled { opacity: 0.5; box-shadow: none; cursor: default; }
+.level-card.is-solved { background: #e6f2ea; }
+.level-num {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--slot);
+  font-weight: 700;
+}
+.level-name { flex: 1; font-weight: 600; }
+.level-status { color: var(--muted); font-size: 0.85rem; }
