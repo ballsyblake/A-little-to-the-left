@@ -7,7 +7,7 @@ export interface BoardOptions {
   pieces: PieceDef[];
   areas?: AreaDef[];
   snapRadius: number;
-  onChange?(pieces: PieceState[], event: 'snap' | 'drop' | 'rotate'): void;
+  onChange?(pieces: PieceState[], event: 'snap' | 'drop' | 'rotate', piece: PieceState): void;
 }
 
 export interface Board {
@@ -15,6 +15,9 @@ export interface Board {
   pieces: PieceState[];
   /** Stop all input (e.g. once the level is solved). */
   lock(): void;
+  isLocked(): boolean;
+  /** Push a piece out of its slot by dx px, tilting it by `tilt` degrees. */
+  nudge(piece: PieceState, dx: number, tilt: number): void;
   destroy(): void;
 }
 
@@ -68,18 +71,32 @@ export function createBoard(opts: BoardOptions): Board {
         if (id) slotEls.get(id)?.classList.add('is-hot');
         hot = id;
       },
-      onChange: (_piece, event) => opts.onChange?.(pieces, event),
+      onChange: (piece, event) => opts.onChange?.(pieces, event, piece),
     }),
   );
 
   // Re-render on resize/rotation; normalised coords make this trivial.
-  const ro = new ResizeObserver(() => pieces.forEach((p) => render(p, el)));
+  // Transitions switch on only after the first placement, so pieces appear
+  // in place instead of gliding in from the board's corner.
+  const ro = new ResizeObserver(() => {
+    pieces.forEach((p) => render(p, el));
+    requestAnimationFrame(() => el.classList.add('is-ready'));
+  });
   ro.observe(el);
 
   return {
     el,
     pieces,
     lock: () => el.classList.add('is-locked'),
+    isLocked: () => el.classList.contains('is-locked'),
+    nudge(piece, dx, tilt) {
+      piece.slotId = null;
+      piece.x += dx / el.clientWidth;
+      piece.rotation += tilt;
+      piece.el.classList.add('is-blown'); // slower, softer slide than a snap
+      render(piece, el);
+      setTimeout(() => piece.el.classList.remove('is-blown'), 900);
+    },
     destroy() {
       ro.disconnect();
       unbinds.forEach((u) => u());

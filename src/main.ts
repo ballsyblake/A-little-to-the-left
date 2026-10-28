@@ -1,6 +1,7 @@
 // Entry point: a tiny router that swaps between screens.
 import './style.css';
 import { LEVELS } from './levels';
+import { unlockAudioOnFirstGesture } from './ui/audio';
 import { loadSolved, markSolved } from './ui/progress';
 import { showGame, showLevelSelect } from './ui/screens';
 
@@ -25,4 +26,5 @@ function play(index: number): void {
   });
 }
 
+unlockAudioOnFirstGesture();
 levelSelect();

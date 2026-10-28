@@ -1,7 +1,10 @@
 // Screens: each builds its DOM into `app` and returns a cleanup function.
 import { createBoard } from '../engine/board';
 import { isSolved } from '../engine/wincheck';
+import { startWind } from '../engine/wind';
 import type { LevelConfig } from '../engine/types';
+import { chime, whoosh } from './audio';
+import { gustStreaks, haptic, plop, settle, shiver } from './effects';
 
 export interface GameScreenOptions {
   level: LevelConfig;
@@ -34,23 +37,48 @@ export function showGame(app: HTMLElement, opts: GameScreenOptions): () => void 
     pieces: level.pieces,
     areas: level.areas,
     snapRadius: level.snapRadius,
-    onChange(pieces, event) {
-      if (event === 'snap') navigator.vibrate?.(10); // haptic tick where supported
-      // Win check after every move.
-      if (isSolved(level, pieces)) {
-        board.lock();
-        hint.textContent = 'Just so.';
-        next.hidden = false;
-        opts.onSolved();
+    onChange(pieces, event, piece) {
+      if (event === 'snap') {
+        haptic(10);
+        plop(piece.el);
       }
+      // Win check after every move.
+      if (isSolved(level, pieces)) void win();
     },
   });
+
+  async function win() {
+    board.lock();
+    stopWind();
+    opts.onSolved(); // save progress immediately, before any animation
+    haptic([12, 60, 12]);
+    chime();
+    await settle(board.el, board.pieces.map((p) => p.el));
+    hint.textContent = 'Just so.';
+    next.hidden = false;
+    next.classList.add('is-shown');
+  }
+
+  // Nuisance: only levels that configure it get a breeze.
+  const stopWind = level.wind
+    ? startWind(board, level.wind, {
+        onGust(target, fromLeft) {
+          gustStreaks(board.el, fromLeft);
+          whoosh();
+          shiver(target.el);
+        },
+        onNudged: () => haptic(6),
+      })
+    : () => {};
 
   const footer = el('div', 'footer');
   footer.append(next);
   app.append(header, hint, board.el, footer);
 
-  return () => board.destroy();
+  return () => {
+    stopWind();
+    board.destroy();
+  };
 }
 
 export interface LevelSelectOptions {

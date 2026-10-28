@@ -1,3 +1,5 @@
+import type { WindConfig } from './wind';
+
 // Shared shapes used by the engine. Positions are normalised (0..1) relative
 // to the board so the same layout works on any screen size.
 
@@ -65,6 +67,8 @@ export interface LevelConfig {
   slots: SlotDef[];
   pieces: PieceDef[];
   areas?: AreaDef[];
+  /** Optional nuisance: an occasional gust that nudges a placed piece. */
+  wind?: WindConfig;
   /** The level is solved when ANY rule passes (= multiple valid solutions). */
   rules: WinRule[];
 }
