@@ -129,10 +129,10 @@ html, body {
 .gust {
   position: absolute;
   left: 0;
-  width: 140px;
-  height: 3px;
+  width: 180px;
+  height: 4px;
   border-radius: 2px;
-  background: linear-gradient(90deg, transparent, #cfe0ea, transparent);
+  background: linear-gradient(90deg, transparent, #9fbfd2, transparent);
   pointer-events: none;
   z-index: 10000;
 }

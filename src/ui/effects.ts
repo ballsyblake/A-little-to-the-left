@@ -46,21 +46,36 @@ export async function settle(board: HTMLElement, pieceEls: HTMLElement[]): Promi
 /** Draw a few soft streaks sweeping across the board: the gust arriving. */
 export function gustStreaks(board: HTMLElement, fromLeft: boolean): void {
   if (reducedMotion()) return;
-  for (let i = 0; i < 3; i++) {
+  for (let i = 0; i < 5; i++) {
     const s = document.createElement('div');
     s.className = 'gust';
-    s.style.top = `${30 + Math.random() * 40}%`;
+    s.style.top = `${15 + i * 15 + Math.random() * 8}%`;
     board.append(s);
-    const dx = board.clientWidth + 160;
+    const dx = board.clientWidth + 200;
     s.animate(
       [
-        { transform: `translateX(${fromLeft ? -160 : dx}px)`, opacity: 0 },
-        { opacity: 0.7, offset: 0.3 },
-        { transform: `translateX(${fromLeft ? dx : -160}px)`, opacity: 0 },
+        { transform: `translateX(${fromLeft ? -200 : dx}px)`, opacity: 0 },
+        { opacity: 0.9, offset: 0.35 },
+        { transform: `translateX(${fromLeft ? dx : -200}px)`, opacity: 0 },
       ],
-      { duration: 900, delay: i * 90, easing: 'ease-in-out' },
+      { duration: 1100, delay: i * 80, easing: 'ease-in-out' },
     ).finished.then(() => s.remove());
   }
+}
+
+/** After being pushed, the piece rocks to a stop. */
+export function rock(pieceEl: HTMLElement): void {
+  if (reducedMotion()) return;
+  pieceEl.firstElementChild?.animate(
+    [
+      { transform: 'rotate(0deg)' },
+      { transform: 'rotate(6deg)' },
+      { transform: 'rotate(-4deg)' },
+      { transform: 'rotate(2deg)' },
+      { transform: 'rotate(0deg)' },
+    ],
+    { duration: 900, easing: 'ease-out' },
+  );
 }
 
 /** A short shiver on a piece just before the wind moves it. */
@@ -69,10 +84,10 @@ export function shiver(pieceEl: HTMLElement): void {
   pieceEl.firstElementChild?.animate(
     [
       { transform: 'rotate(0deg)' },
-      { transform: 'rotate(2deg)' },
-      { transform: 'rotate(-2deg)' },
+      { transform: 'rotate(3deg)' },
+      { transform: 'rotate(-3deg)' },
       { transform: 'rotate(0deg)' },
     ],
-    { duration: 300, iterations: 1 },
+    { duration: 220, iterations: 2 },
   );
 }

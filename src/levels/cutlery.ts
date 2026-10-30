@@ -44,6 +44,6 @@ export const cutlery: LevelConfig = {
     rotatable: true,
   })),
   rules: [all(groupedBy('type'), sameRotation)],
-  // Gentle and rare: every 25-45 s, only once a few pieces are placed.
-  wind: { minDelayMs: 25_000, maxDelayMs: 45_000, maxOffsetPx: 16, minPlaced: 3 },
+  // Gentle and rare: first gust 8-12 s after 3 pieces are placed, then every 30-45 s.
+  wind: { firstDelayMs: [8_000, 12_000], delayMs: [30_000, 45_000], maxOffsetPx: 26, minPlaced: 3 },
 };

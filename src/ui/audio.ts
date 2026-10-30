@@ -9,7 +9,11 @@ function audio(): { ctx: AudioContext; out: GainNode } | null {
   if (!ctx) {
     const AC = window.AudioContext ?? (window as any).webkitAudioContext;
     if (!AC) return null;
-    ctx = new AC() as AudioContext;
+    try {
+      ctx = new AC() as AudioContext;
+    } catch {
+      return null; // audio unavailable: the game stays silent, nothing breaks
+    }
     master = ctx.createGain();
     master.gain.value = 0.35; // keep everything soft
     master.connect(ctx.destination);

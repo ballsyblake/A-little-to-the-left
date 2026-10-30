@@ -4,7 +4,7 @@ import { isSolved } from '../engine/wincheck';
 import { startWind } from '../engine/wind';
 import type { LevelConfig } from '../engine/types';
 import { chime, whoosh } from './audio';
-import { gustStreaks, haptic, plop, settle, shiver } from './effects';
+import { gustStreaks, haptic, plop, rock, settle, shiver } from './effects';
 
 export interface GameScreenOptions {
   level: LevelConfig;
@@ -60,14 +60,29 @@ export function showGame(app: HTMLElement, opts: GameScreenOptions): () => void 
   }
 
   // Nuisance: only levels that configure it get a breeze.
-  const stopWind = level.wind
-    ? startWind(board, level.wind, {
+  // Add ?wind=fast to the URL to get a gust every few seconds while testing.
+  const fast = new URLSearchParams(location.search).get('wind') === 'fast';
+  const wind = level.wind && fast
+    ? { ...level.wind, firstDelayMs: [2_000, 3_000] as [number, number], delayMs: [5_000, 6_000] as [number, number] }
+    : level.wind;
+  let explained = false;
+  const stopWind = wind
+    ? startWind(board, wind, {
         onGust(target, fromLeft) {
           gustStreaks(board.el, fromLeft);
-          whoosh();
           shiver(target.el);
+          whoosh();
         },
-        onNudged: () => haptic(6),
+        onNudged(target) {
+          rock(target.el);
+          haptic(6);
+          if (!explained) {
+            // First gust per visit: say what happened, then restore the hint.
+            explained = true;
+            hint.textContent = 'A breeze nudged something out of place.';
+            setTimeout(() => !board.isLocked() && (hint.textContent = level.hint), 3500);
+          }
+        },
       })
     : () => {};
 
