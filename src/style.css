@@ -82,6 +82,36 @@ html, body {
 }
 .area.compartment { background: #eadfce; }
 
+/* Fridge door, domino runner, scale pans and dial. */
+.area.fridge { background: #eef3f6; box-shadow: inset 0 0 0 2px #d6e0e6; }
+.area.runner { background: #e9e0d2; border-radius: 12px; }
+.area.pan { background: transparent; box-shadow: none; }
+.area.pan::after { /* the pan's plate, under the weights */
+  content: '';
+  position: absolute;
+  left: 0; right: 0; bottom: -4px;
+  height: 12px;
+  border-radius: 0 0 40px 40px;
+  background: #d8c3a8;
+}
+.area.dial {
+  border-radius: 64px 64px 14px 14px;
+  background: #f4ebde;
+}
+.area.dial::after { /* needle: leans toward the heavier pan */
+  content: '';
+  position: absolute;
+  left: calc(50% - 2px);
+  bottom: 8px;
+  width: 4px;
+  height: 44px;
+  border-radius: 2px;
+  background: #c98b7a;
+  transform-origin: 50% 100%;
+  transform: rotate(var(--tilt, 0deg));
+  transition: transform 500ms cubic-bezier(.3, 1.4, .5, 1); /* slight wobble */
+}
+
 /* A slot: a soft rounded well an object can rest in. */
 .slot {
   position: absolute;
@@ -201,18 +231,26 @@ html, body {
 }
 
 /* Level select */
-.title-big { font-size: 2rem; margin-top: 12vh; }
+.title-big { font-size: 2rem; margin-top: 6vh; }
+/* The list scrolls on its own (the page never does), so any number of
+   levels fits on any screen. */
 .level-list {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  margin-top: 24px;
+  gap: 10px;
+  margin-top: 16px;
+  padding: 4px 4px 12px; /* room for card shadows */
 }
 .level-card {
   display: flex;
   align-items: center;
   gap: 14px;
-  min-height: 64px;
+  flex-shrink: 0;
+  min-height: 58px;
   padding: 0 18px;
   border: 0;
   border-radius: var(--radius);

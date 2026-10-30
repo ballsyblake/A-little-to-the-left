@@ -67,3 +67,44 @@ export const sameRotation: WinRule = (b) => {
     .map((p) => ((p.rotation % 360) + 360) % 360);
   return turns.every((t) => t === turns[0]);
 };
+
+/** Letters (prop) read in slot order spell any one of `words`. */
+export function spellsOneOf(prop: string, words: string[]): WinRule {
+  return (b) => {
+    const ps = piecesInSlotOrder(b);
+    return !!ps && words.includes(ps.map((p) => p.def.props?.[prop]).join(''));
+  };
+}
+
+/**
+ * Domino-style chain: each piece has `left` and `right` values; turning it
+ * 180 degrees swaps them. Passes when every touching pair of ends matches.
+ */
+export function chainedEnds(left = 'left', right = 'right'): WinRule {
+  return (b) => {
+    const ps = piecesInSlotOrder(b);
+    if (!ps) return false;
+    const ends = ps.map((p) => {
+      const turn = ((p.rotation % 360) + 360) % 360;
+      const l = p.def.props?.[left];
+      const r = p.def.props?.[right];
+      if (turn === 0) return [l, r];
+      if (turn === 180) return [r, l];
+      return null; // sideways never counts
+    });
+    return ends.every((e, i) => e && (i === 0 || ends[i - 1]![1] === e[0]));
+  };
+}
+
+/** All slots filled and every group's total of numeric `prop` is the same. */
+export function equalSums(prop: string): WinRule {
+  return (b) => {
+    if (!allFilled(b)) return false;
+    const totals = new Map<string, number>();
+    for (const s of b.slots) {
+      const g = s.group ?? s.id;
+      totals.set(g, (totals.get(g) ?? 0) + Number(b.pieceIn(s.id)!.def.props?.[prop]));
+    }
+    return new Set(totals.values()).size === 1;
+  };
+}

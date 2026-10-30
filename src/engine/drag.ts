@@ -71,7 +71,7 @@ export function makeDraggable(piece: PieceState, ctx: DragContext): () => void {
     onTap() {
       if (!piece.def.rotatable) return;
       // Straighten any tilt, then turn. Counting up keeps CSS spinning clockwise.
-      piece.rotation = Math.round(piece.rotation / 90) * 90 + 90;
+      piece.rotation = Math.round(piece.rotation / 90) * 90 + (piece.def.rotateStep ?? 90);
       render(piece, board);
       ctx.onChange(piece, 'rotate');
     },

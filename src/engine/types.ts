@@ -35,6 +35,8 @@ export interface PieceDef {
   start: { x: number; y: number; rot?: number };
   props?: PieceProps;
   rotatable?: boolean;
+  /** Degrees turned per tap (default 90; dominoes use 180 to flip). */
+  rotateStep?: number;
 }
 
 /** Live state of a piece on the board. */
@@ -67,6 +69,8 @@ export interface LevelConfig {
   slots: SlotDef[];
   pieces: PieceDef[];
   areas?: AreaDef[];
+  /** Optional live visuals: runs after every move (e.g. a scale's needle). */
+  decorate?(view: BoardView, boardEl: HTMLElement): void;
   /** Optional nuisance: an occasional gust that nudges a placed piece. */
   wind?: WindConfig;
   /** The level is solved when ANY rule passes (= multiple valid solutions). */

@@ -1,6 +1,6 @@
 // Screens: each builds its DOM into `app` and returns a cleanup function.
 import { createBoard } from '../engine/board';
-import { isSolved } from '../engine/wincheck';
+import { isSolved, viewOf } from '../engine/wincheck';
 import { startWind } from '../engine/wind';
 import type { LevelConfig } from '../engine/types';
 import { chime, whoosh } from './audio';
@@ -42,10 +42,12 @@ export function showGame(app: HTMLElement, opts: GameScreenOptions): () => void 
         haptic(10);
         plop(piece.el);
       }
+      level.decorate?.(viewOf(level, pieces), board.el);
       // Win check after every move.
       if (isSolved(level, pieces)) void win();
     },
   });
+  level.decorate?.(viewOf(level, board.pieces), board.el); // initial state
 
   async function win() {
     board.lock();
