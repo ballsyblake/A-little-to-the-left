@@ -104,28 +104,34 @@ export interface LevelSelectOptions {
   onPick(index: number): void;
 }
 
-/** Grid of level cards. A level unlocks once the previous one is solved. */
+/** Grid of numbered level tiles. A level unlocks once the previous one is solved. */
 export function showLevelSelect(app: HTMLElement, opts: LevelSelectOptions): () => void {
   app.replaceChildren();
+  const done = opts.levels.filter((l) => opts.solved.has(l.id)).length;
   const title = el('h1', 'title title-big', 'Just So');
-  const hint = el('p', 'hint', 'A few small things to put right.');
+  const hint = el('p', 'hint', `A few small things to put right. ${done} / ${opts.levels.length}`);
 
-  const list = el('div', 'level-list');
+  const grid = el('div', 'level-grid');
+  let current: HTMLElement | null = null; // first playable, unsolved level
   opts.levels.forEach((level, i) => {
     const solved = opts.solved.has(level.id);
     const unlocked = i === 0 || opts.solved.has(opts.levels[i - 1].id);
-    const card = el('button', `level-card${solved ? ' is-solved' : ''}`) as HTMLButtonElement;
-    card.disabled = !unlocked;
-    card.append(
-      el('span', 'level-num', String(i + 1)),
-      el('span', 'level-name', level.name),
-      el('span', 'level-status', solved ? 'Solved' : unlocked ? '' : 'Locked'),
-    );
-    card.addEventListener('click', () => opts.onPick(i));
-    list.append(card);
+    const tile = el('button', 'level-tile', String(i + 1)) as HTMLButtonElement;
+    tile.classList.toggle('is-solved', solved);
+    tile.disabled = !unlocked;
+    tile.title = level.name;
+    tile.setAttribute('aria-label', `Level ${i + 1}: ${level.name}${solved ? ', solved' : unlocked ? '' : ', locked'}`);
+    if (unlocked && !solved && !current) {
+      current = tile;
+      tile.classList.add('is-current');
+    }
+    tile.addEventListener('click', () => opts.onPick(i));
+    grid.append(tile);
   });
 
-  app.append(title, hint, list);
+  app.append(title, hint, grid);
+  // Open where the player left off.
+  requestAnimationFrame(() => (current as HTMLElement | null)?.scrollIntoView({ block: 'center' }));
   return () => {};
 }
 

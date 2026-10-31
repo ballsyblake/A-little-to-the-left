@@ -232,45 +232,33 @@ html, body {
 
 /* Level select */
 .title-big { font-size: 2rem; margin-top: 6vh; }
-/* The list scrolls on its own (the page never does), so any number of
-   levels fits on any screen. */
-.level-list {
+/* 100 levels: a 5-column grid of number tiles, scrolling on its own. */
+.level-grid {
   flex: 1;
   min-height: 0;
   overflow-y: auto;
   overscroll-behavior: contain;
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  align-content: start;
   gap: 10px;
   margin-top: 16px;
-  padding: 4px 4px 12px; /* room for card shadows */
+  padding: 4px 4px 12px; /* room for tile shadows */
 }
-.level-card {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  flex-shrink: 0;
-  min-height: 58px;
-  padding: 0 18px;
+.level-tile {
+  aspect-ratio: 1;
+  min-height: 48px;
   border: 0;
-  border-radius: var(--radius);
+  border-radius: 14px;
   background: var(--surface);
-  box-shadow: 0 3px 10px var(--shadow);
+  box-shadow: 0 2px 8px var(--shadow);
   color: var(--ink);
   font: inherit;
-  text-align: left;
+  font-weight: 700;
+  font-size: 1.05rem;
   cursor: pointer;
 }
-.level-card:disabled { opacity: 0.5; box-shadow: none; cursor: default; }
-.level-card.is-solved { background: #e6f2ea; }
-.level-num {
-  display: grid;
-  place-items: center;
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  background: var(--slot);
-  font-weight: 700;
-}
-.level-name { flex: 1; font-weight: 600; }
-.level-status { color: var(--muted); font-size: 0.85rem; }
+.level-tile:disabled { opacity: 0.4; box-shadow: none; cursor: default; }
+.level-tile.is-solved { background: #e6f2ea; color: #3f6b55; }
+.level-tile.is-current { box-shadow: 0 0 0 3px var(--accent), 0 2px 8px var(--shadow); }
+

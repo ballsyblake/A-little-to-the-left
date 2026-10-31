@@ -75,4 +75,13 @@ export interface LevelConfig {
   wind?: WindConfig;
   /** The level is solved when ANY rule passes (= multiple valid solutions). */
   rules: WinRule[];
+  /** One known answer (generated levels), used by tests. */
+  solution?: SolutionStep[];
+}
+
+/** "Put this piece in this slot, turned this far." */
+export interface SolutionStep {
+  slot: string;
+  piece: string;
+  rotation?: number;
 }

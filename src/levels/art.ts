@@ -68,9 +68,9 @@ export function spoon(): string {
 }
 
 /** A chunky fridge-magnet letter on a soft rounded tile. */
-export function magnet(letter: string, colour: string): string {
+export function magnet(letter: string, colour: string, size = 50): string {
   return `
-<svg width="50" height="56" viewBox="0 0 50 56" aria-hidden="true">
+<svg width="${size}" height="${size + 6}" viewBox="0 0 50 56" aria-hidden="true">
   <rect x="2" y="2" width="46" height="52" rx="12" fill="${colour}"/>
   <text x="25" y="40" text-anchor="middle" font-size="32" font-weight="800"
     font-family="ui-rounded, 'SF Pro Rounded', Nunito, system-ui, sans-serif" fill="#5b5149">${letter}</text>
@@ -106,7 +106,7 @@ export const WEIGHT_CANVAS = 52;
 
 /** A little brass kitchen weight; bigger value = bigger weight. */
 export function weight(kg: number): string {
-  const w = 26 + kg * 2;            // 28..44 px wide
+  const w = 24 + kg * 2;            // 26..42 px wide
   const h = 22 + kg * 2;            // body height
   const top = WEIGHT_CANVAS - h;
   return `
@@ -117,5 +117,28 @@ export function weight(kg: number): string {
     L4 ${WEIGHT_CANVAS} Q1 ${WEIGHT_CANVAS} 1 ${WEIGHT_CANVAS - 3} Z" fill="#ecd3a0"/>
   <text x="${w / 2}" y="${WEIGHT_CANVAS - h / 2 + 5}" text-anchor="middle" font-size="14" font-weight="800"
     font-family="ui-rounded, 'SF Pro Rounded', Nunito, system-ui, sans-serif" fill="#8a6d3b">${kg}</text>
+</svg>`;
+}
+
+/** A paint chip: a strip of one colour with a little white label band. */
+export function swatch(colour: string, w: number, h = 64): string {
+  return `
+<svg width="${w}" height="${h}" viewBox="0 0 ${w} ${h}" aria-hidden="true">
+  <rect x="1" y="1" width="${w - 2}" height="${h - 2}" rx="6" fill="#fffdf8" stroke="#e3d8c8"/>
+  <rect x="4" y="4" width="${w - 8}" height="${h - 20}" rx="4" fill="${colour}"/>
+  <rect x="${w / 2 - 7}" y="${h - 12}" width="14" height="3" rx="1.5" fill="#d9cdbd"/>
+</svg>`;
+}
+
+/** A sewing button: a disc with a rim and 2 or 4 holes. */
+export function button(colour: string, d: number, holes: 2 | 4): string {
+  const c = d / 2;
+  const o = d * 0.13; // hole offset from centre
+  const pts: [number, number][] = holes === 2 ? [[-o, 0], [o, 0]] : [[-o, -o], [o, -o], [-o, o], [o, o]];
+  return `
+<svg width="${d}" height="${d}" viewBox="0 0 ${d} ${d}" aria-hidden="true">
+  <circle cx="${c}" cy="${c}" r="${c - 1}" fill="${colour}"/>
+  <circle cx="${c}" cy="${c}" r="${c - 5}" fill="none" stroke="#000" stroke-opacity="0.08" stroke-width="2"/>
+  ${pts.map(([x, y]) => `<circle cx="${c + x}" cy="${c + y}" r="${d * 0.06}" fill="#5b5149" opacity="0.55"/>`).join('')}
 </svg>`;
 }

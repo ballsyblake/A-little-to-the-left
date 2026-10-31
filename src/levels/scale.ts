@@ -2,14 +2,14 @@
 // 1+2+9 = 3+4+5 = 12 is the only split; either pan can take either set.
 // The dial needle leans toward the heavier side as you go (see decorate).
 import { equalSums } from '../engine/rules';
-import type { LevelConfig, SlotDef } from '../engine/types';
+import type { BoardView, LevelConfig, SlotDef } from '../engine/types';
 import { WEIGHT_CANVAS, weight } from './art';
 
 const PAN_Y = 0.4;
 const KG = [4, 9, 1, 5, 3, 2]; // scrambled starting order
 
 const pan = (group: string, xs: number[]): SlotDef[] =>
-  xs.map((x, i) => ({ id: `${group}${i}`, group, x, y: PAN_Y, w: 46, h: WEIGHT_CANVAS + 4 }));
+  xs.map((x, i) => ({ id: `${group}${i}`, group, x, y: PAN_Y, w: 42, h: WEIGHT_CANVAS + 4 }));
 
 export const scale: LevelConfig = {
   id: 'scale',
@@ -29,13 +29,15 @@ export const scale: LevelConfig = {
     props: { kg },
   })),
   rules: [equalSums('kg')],
-  // Live feedback: needle angle from the difference between the pans.
-  decorate(view, boardEl) {
-    let diff = 0;
-    for (const s of view.slots) {
-      const kg = Number(view.pieceIn(s.id)?.def.props?.kg ?? 0);
-      diff += s.group === 'R' ? kg : -kg;
-    }
-    boardEl.style.setProperty('--tilt', `${Math.max(-50, Math.min(50, diff * 6))}deg`);
-  },
+  decorate: scaleNeedle,
 };
+
+/** Live feedback: needle angle from the difference between the pans. */
+export function scaleNeedle(view: BoardView, boardEl: HTMLElement): void {
+  let diff = 0;
+  for (const s of view.slots) {
+    const kg = Number(view.pieceIn(s.id)?.def.props?.kg ?? 0);
+    diff += s.group === 'R' ? kg : -kg;
+  }
+  boardEl.style.setProperty('--tilt', `${Math.max(-50, Math.min(50, diff * 6))}deg`);
+}
