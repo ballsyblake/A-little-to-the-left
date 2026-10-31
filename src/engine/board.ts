@@ -34,6 +34,13 @@ export function createBoard(opts: BoardOptions): Board {
     ae.style.width = `${a.w * 100}%`;
     ae.style.height = a.hPx ? `${a.hPx}px` : `${a.h * 100}%`;
     ae.style.transform = 'translateY(-50%)'; // centre vertically either way
+    if (a.colour) ae.style.background = a.colour;
+    if (a.label) {
+      const label = document.createElement('span');
+      label.className = 'area-label';
+      label.textContent = a.label;
+      ae.append(label);
+    }
     el.append(ae);
   }
 
@@ -45,6 +52,14 @@ export function createBoard(opts: BoardOptions): Board {
     se.style.top = `${s.y * 100}%`;
     se.style.width = `${s.w}px`;
     se.style.height = `${s.h}px`;
+    if (s.ghost) {
+      // Outline slot: a faint copy of the piece that belongs here.
+      const g = document.createElement('div');
+      g.className = 'ghost';
+      g.innerHTML = s.ghost;
+      g.style.transform = `rotate(${s.wantRot ?? 0}deg)`;
+      se.append(g);
+    }
     el.append(se);
     slotEls.set(s.id, se);
   }
@@ -54,11 +69,20 @@ export function createBoard(opts: BoardOptions): Board {
     pe.className = 'piece';
     pe.innerHTML = def.svg;
     el.append(pe);
-    return { def, el: pe, x: def.start.x, y: def.start.y, rotation: def.start.rot ?? 0, slotId: null };
+    // Givens start in their slot, locked.
+    const fixed = def.fixedIn ? opts.slots.find((s) => s.id === def.fixedIn) : undefined;
+    if (fixed) pe.classList.add('is-fixed');
+    return {
+      def, el: pe,
+      x: fixed ? fixed.x : def.start.x,
+      y: fixed ? fixed.y : def.start.y,
+      rotation: def.start.rot ?? 0,
+      slotId: fixed ? fixed.id : null,
+    };
   });
 
   let hot: string | null = null;
-  const unbinds = pieces.map((p) =>
+  const unbinds = pieces.filter((p) => !p.def.fixedIn).map((p) =>
     makeDraggable(p, {
       board: el,
       slots: opts.slots,

@@ -41,7 +41,7 @@ export function startWind(board: Board, cfg: WindConfig, hooks: WindHooks): () =
     if (document.hidden || board.isLocked()) return; // clock paused
     elapsed += TICK_MS;
 
-    const placed = board.pieces.filter((p) => p.slotId !== null);
+    const placed = board.pieces.filter((p) => p.slotId !== null && !p.def.fixedIn);
     if (placed.length < cfg.minPlaced) {
       nextGustAt = null; // disarm until the player has made some progress
       return;

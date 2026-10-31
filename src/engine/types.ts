@@ -11,6 +11,16 @@ export interface SlotDef {
   h: number; // px
   /** Slots sharing a group form one container, e.g. a drawer compartment. */
   group?: string;
+  /** Grid position, for row/column rules. */
+  row?: number;
+  col?: number;
+  /** Outline slot: the piece here must have these props... */
+  want?: PieceProps;
+  /** ...and this rotation (compared modulo wantRotMod, default 360). */
+  wantRot?: number;
+  wantRotMod?: number;
+  /** Faint picture of what belongs here (inline SVG), drawn at wantRot. */
+  ghost?: string;
 }
 
 /** Purely visual backdrop (shelf, tray compartment). Fully normalised. */
@@ -22,6 +32,10 @@ export interface AreaDef {
   /** Fixed height in px instead of `h`, for backdrops that must hug pieces. */
   hPx?: number;
   className?: string;
+  /** Text shown in the area, e.g. a target like "8p". */
+  label?: string;
+  /** Background tint, e.g. the colour a paint bowl should end up. */
+  colour?: string;
 }
 
 /** Facts about a piece that win rules can inspect (length, hue, type...). */
@@ -37,6 +51,10 @@ export interface PieceDef {
   rotatable?: boolean;
   /** Degrees turned per tap (default 90; dominoes use 180 to flip). */
   rotateStep?: number;
+  /** A "given": starts in this slot and can't be moved. */
+  fixedIn?: string;
+  /** Visual size in px, used by layout checks in tests. */
+  size?: { w: number; h: number };
 }
 
 /** Live state of a piece on the board. */
@@ -77,6 +95,8 @@ export interface LevelConfig {
   rules: WinRule[];
   /** One known answer (generated levels), used by tests. */
   solution?: SolutionStep[];
+  /** Logic puzzle: tests check the givens leave exactly one answer. */
+  unique?: boolean;
 }
 
 /** "Put this piece in this slot, turned this far." */

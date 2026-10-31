@@ -1,18 +1,19 @@
-// The ordered list of levels: six hand-made ones, then generated ones up
-// to 100. Add a hand-made level = import it and add it to HANDMADE.
+// The ordered list of levels: six hand-made tutorial levels, then the
+// chapters, each described by its solved state and assembled by the kit.
 import type { LevelConfig } from '../engine/types';
 import { books } from './books';
+import { ch2 } from './chapters/ch2';
+import { ch3 } from './chapters/ch3';
+import { ch4 } from './chapters/ch4';
+import { ch5 } from './chapters/ch5';
+import { ch6 } from './chapters/ch6';
 import { cutlery } from './cutlery';
 import { dominoes } from './dominoes';
 import { fridge } from './fridge';
-import { generateLevels } from './gen';
+import { assemble } from './kit';
 import { pencils } from './pencils';
 import { scale } from './scale';
 
-const TOTAL = 100;
-const HANDMADE: LevelConfig[] = [pencils, books, cutlery, fridge, dominoes, scale];
+const TUTORIAL: LevelConfig[] = [pencils, books, cutlery, fridge, dominoes, scale];
 
-export const LEVELS: LevelConfig[] = [
-  ...HANDMADE,
-  ...generateLevels(TOTAL - HANDMADE.length, HANDMADE.length + 1),
-];
+export const LEVELS: LevelConfig[] = [...TUTORIAL, ...[...ch2, ...ch3, ...ch4, ...ch5, ...ch6].map(assemble)];

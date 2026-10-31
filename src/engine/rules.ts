@@ -80,7 +80,7 @@ export function spellsOneOf(prop: string, words: string[]): WinRule {
  * Domino-style chain: each piece has `left` and `right` values; turning it
  * 180 degrees swaps them. Passes when every touching pair of ends matches.
  */
-export function chainedEnds(left = 'left', right = 'right'): WinRule {
+export function chainedEnds(left = 'left', right = 'right', loop = false): WinRule {
   return (b) => {
     const ps = piecesInSlotOrder(b);
     if (!ps) return false;
@@ -92,7 +92,9 @@ export function chainedEnds(left = 'left', right = 'right'): WinRule {
       if (turn === 180) return [r, l];
       return null; // sideways never counts
     });
-    return ends.every((e, i) => e && (i === 0 || ends[i - 1]![1] === e[0]));
+    const chained = ends.every((e, i) => e && (i === 0 || ends[i - 1]![1] === e[0]));
+    // A loop also joins the last end back to the first.
+    return chained && (!loop || ends[ends.length - 1]![1] === ends[0]![0]);
   };
 }
 
