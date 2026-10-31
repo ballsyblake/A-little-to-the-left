@@ -4,9 +4,7 @@
 import { it } from 'vitest';
 import { ch2 } from './chapters/ch2';
 import { ch3 } from './chapters/ch3';
-import { ch4 } from './chapters/ch4';
-import { ch5 } from './chapters/ch5';
-import { ch6 } from './chapters/ch6';
+import { ch4, ch5, ch6 } from './chapters/order';
 import { makeRng } from './rng';
 import { assemble, type Spec } from './kit';
 import { countSolutions } from './solver';

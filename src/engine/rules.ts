@@ -36,7 +36,9 @@ export function orderedEitherWay(prop: string): WinRule[] {
 
 /** Passes only when every given rule passes. */
 export function all(...rules: WinRule[]): WinRule {
-  return (b) => rules.every((r) => r(b));
+  return Object.assign((b: BoardView) => rules.every((r) => r(b)), {
+    possible: (b: BoardView) => rules.every((r) => !r.possible || r.possible(b)),
+  });
 }
 
 /**

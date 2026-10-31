@@ -16,6 +16,8 @@ export interface Tray {
   remove(p: PieceState): void;
   /** Is a board-px point inside the tray strip? */
   contains(y: number): boolean;
+  /** Is there more tray than fits on screen? */
+  canScroll(): boolean;
   /** Scroll controls, used when a sideways swipe starts on a tray piece. */
   scrollStart(): void;
   scrollMove(dx: number): void;
@@ -141,6 +143,7 @@ export function createTray(
     add,
     remove,
     contains: (y) => y > board.clientHeight - height,
+    canScroll: () => maxScroll() > 0,
     scrollStart,
     scrollMove,
     scrollEnd,

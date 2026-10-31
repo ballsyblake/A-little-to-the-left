@@ -38,26 +38,38 @@ export function makeDraggable(piece: PieceState, ctx: DragContext): () => void {
   const pick = (c: Point) =>
     findSnapSlot(c, ctx.slots, board, ctx.snapRadius, (s) => ctx.isFree(s, piece));
 
+  /** Pick the piece up (out of the tray or its slot); `centred` snaps it under the finger. */
+  const lift = (p: Point, centred = false) => {
+    if (ctx.tray?.has(piece)) ctx.tray.remove(piece);
+    offset = centred ? { x: 0, y: 0 } : { x: p.x - piece.x * board.clientWidth, y: p.y - piece.y * board.clientHeight };
+    piece.slotId = null; // lifted out of its slot
+    piece.el.style.zIndex = String(++topZ);
+    piece.el.classList.add('is-dragging');
+  };
+
   return bindGestures(piece.el, board, {
     onDragStart(p, now) {
       const { tray } = ctx;
-      // In the tray, a clearly sideways swipe scrolls it; anything else
-      // (including a diagonal pull toward a far slot) lifts the piece.
-      scrolling = !!tray?.has(piece) && Math.abs(now.x - p.x) > 2 * Math.abs(now.y - p.y);
+      // In a tray wider than the screen, a clearly sideways swipe scrolls
+      // it; anything else lifts the piece.
+      scrolling = !!tray?.has(piece) && tray.canScroll() && Math.abs(now.x - p.x) > 2 * Math.abs(now.y - p.y);
       if (scrolling) {
         downX = p.x;
         tray!.scrollStart();
         return;
       }
-      if (tray?.has(piece)) tray.remove(piece);
-      offset = { x: p.x - piece.x * board.clientWidth, y: p.y - piece.y * board.clientHeight };
-      piece.slotId = null; // lifted out of its slot
-      piece.el.style.zIndex = String(++topZ);
-      piece.el.classList.add('is-dragging');
+      lift(p);
     },
 
     onDragMove(p) {
-      if (scrolling) return ctx.tray!.scrollMove(p.x - downX);
+      if (scrolling) {
+        // Finger left the tray upward: it meant to take the piece after all.
+        if (!ctx.tray!.contains(p.y + 8)) {
+          ctx.tray!.scrollEnd();
+          scrolling = false;
+          lift(p, true);
+        } else return ctx.tray!.scrollMove(p.x - downX);
+      }
       const c = centreFrom(p);
       piece.x = c.x / board.clientWidth;
       piece.y = c.y / board.clientHeight;

@@ -75,8 +75,12 @@ export interface BoardView {
   pieceIn(slotId: string): PieceState | undefined;
 }
 
-/** A win rule is just a predicate: "is the board solved under this rule?" */
-export type WinRule = (board: BoardView) => boolean;
+/**
+ * A win rule is just a predicate: "is the board solved under this rule?"
+ * It may also offer `possible`: "could a half-filled board still pass?",
+ * which lets the solver give up on dead ends early.
+ */
+export type WinRule = ((board: BoardView) => boolean) & { possible?: (board: BoardView) => boolean };
 
 /** Everything needed to play one level. Pure data plus rule functions. */
 export interface LevelConfig {
