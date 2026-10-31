@@ -295,7 +295,6 @@ html, body {
   font-size: 1.05rem;
   cursor: pointer;
 }
-.level-tile:disabled { opacity: 0.4; box-shadow: none; cursor: default; }
 .level-tile.is-solved { background: #e6f2ea; color: #3f6b55; }
 .level-tile.is-current { box-shadow: 0 0 0 3px var(--accent), 0 2px 8px var(--shadow); }
 

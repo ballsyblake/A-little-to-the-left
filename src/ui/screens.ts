@@ -104,7 +104,7 @@ export interface LevelSelectOptions {
   onPick(index: number): void;
 }
 
-/** Grid of numbered level tiles. A level unlocks once the previous one is solved. */
+/** Grid of numbered level tiles. Every level is open; solved ones are ticked off. */
 export function showLevelSelect(app: HTMLElement, opts: LevelSelectOptions): () => void {
   app.replaceChildren();
   const done = opts.levels.filter((l) => opts.solved.has(l.id)).length;
@@ -112,16 +112,14 @@ export function showLevelSelect(app: HTMLElement, opts: LevelSelectOptions): () 
   const hint = el('p', 'hint', `A few small things to put right. ${done} / ${opts.levels.length}`);
 
   const grid = el('div', 'level-grid');
-  let current: HTMLElement | null = null; // first playable, unsolved level
+  let current: HTMLElement | null = null; // first unsolved level
   opts.levels.forEach((level, i) => {
     const solved = opts.solved.has(level.id);
-    const unlocked = i === 0 || opts.solved.has(opts.levels[i - 1].id);
     const tile = el('button', 'level-tile', String(i + 1)) as HTMLButtonElement;
     tile.classList.toggle('is-solved', solved);
-    tile.disabled = !unlocked;
     tile.title = level.name;
-    tile.setAttribute('aria-label', `Level ${i + 1}: ${level.name}${solved ? ', solved' : unlocked ? '' : ', locked'}`);
-    if (unlocked && !solved && !current) {
+    tile.setAttribute('aria-label', `Level ${i + 1}: ${level.name}${solved ? ', solved' : ''}`);
+    if (!solved && !current) {
       current = tile;
       tile.classList.add('is-current');
     }
