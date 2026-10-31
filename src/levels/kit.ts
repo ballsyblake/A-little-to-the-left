@@ -1,7 +1,7 @@
 // Level kit: describe a level by its SOLVED state (which item ends up in
 // which slot) and assemble() derives pieces, givens, the scrambled start
 // and the recorded solution. Layout helpers place slots on the board.
-import type { AreaDef, LevelConfig, PieceDef, PieceProps, SlotDef, WinRule } from '../engine/types';
+import type { AreaDef, LevelConfig, PieceDef, PieceProps, SlotDef, SolutionStep, WinRule } from '../engine/types';
 import type { WindConfig } from '../engine/wind';
 import { makeRng } from './rng';
 
@@ -23,6 +23,26 @@ export interface Item {
   startRot?: number;
   /** Outline symmetry: rotations equal modulo this count as matching. */
   rotMod?: number;
+  /** Tap-to-change looks; `startState` is how it starts, `solvedState` its answer. */
+  states?: { svg: string; props?: PieceProps }[];
+  startState?: number;
+  solvedState?: number;
+  /** Grimy: this many rubs with the cloth to polish. */
+  dirt?: number;
+  /** Turned freely by dragging (frames); start at `startRot`, answer `solvedRot`. */
+  spin?: boolean;
+  tool?: 'cloth';
+}
+
+/** Another way to solve the same level: a rearrangement of the solved items. */
+export interface Alternative {
+  rule: WinRule;
+  /** order[i] = index (into `solved`) of the item in slot i; default unchanged. */
+  order?: number[];
+  /** Per slot: the state that item ends in for this way. */
+  states?: (number | undefined)[];
+  /** Per slot: the rotation for this way. */
+  rotations?: (number | undefined)[];
 }
 
 export interface Spec {
@@ -48,6 +68,12 @@ export interface Spec {
   decorate?: LevelConfig['decorate'];
   snapRadius?: number;
   unique?: boolean;
+  /** Further ways to solve it (rules[0] is the first way). */
+  also?: Alternative[];
+  /** Tools to work with (the cloth), kept in the tray. */
+  tools?: Item[];
+  /** Rule only in the hint, as in the original game. */
+  wordless?: boolean;
 }
 
 /** Tiny string hash so each level id gets its own random seed. */
@@ -69,8 +95,17 @@ export function assemble(spec: Spec): LevelConfig {
   const piece = (it: Item, id: string, fixedIn?: string): PieceDef => ({
     id, svg: it.svg, props: it.props, size: { w: it.w, h: it.h },
     rotatable: it.rotatable, rotateStep: it.rotateStep,
-    start: { x: 0.5, y: 0.8, rot: fixedIn ? it.solvedRot ?? 0 : startRot(it) },
+    // Givens sit at their answer, except things you must still turn or tap.
+    start: {
+      x: 0.5, y: 0.8,
+      rot: it.spin ? it.startRot ?? 0 : fixedIn ? it.solvedRot ?? 0 : startRot(it),
+      state: it.startState ?? 0,
+    },
     ...(fixedIn && { fixedIn }),
+    ...(it.states && { states: it.states }),
+    ...(it.dirt && { dirt: it.dirt }),
+    ...(it.spin && { spin: true }),
+    ...(it.tool && { tool: it.tool }),
   });
 
   const startRot = (it: Item) => {
@@ -89,6 +124,22 @@ export function assemble(spec: Spec): LevelConfig {
     ...spec.solved.flatMap((it, i) => (given.has(i) ? [] : [piece(it, `p${i}`)])),
     ...(spec.decoys ?? []).map((it, k) => piece(it, `x${k}`)),
   ]);
+  const tools = (spec.tools ?? []).map((it, k) => piece(it, `t${k}`));
+
+  /** One recorded answer: which piece ends in each slot, turned/tapped/polished. */
+  const answer = (order: number[], states: (number | undefined)[] = [], rotations: (number | undefined)[] = []): SolutionStep[] =>
+    order.flatMap((k, i) => {
+      const it = spec.solved[k];
+      if (given.has(i) && !it.spin && !it.states && !it.dirt) return []; // nothing to do
+      return [{
+        slot: slots[i].id, piece: `p${k}`,
+        ...((it.rotatable || it.spin) && { rotation: rotations[i] ?? it.solvedRot ?? 0 }),
+        ...(it.states && { state: states[i] ?? it.solvedState ?? 0 }),
+        ...(it.dirt && { clean: true }),
+      }];
+    });
+  const identity = spec.solved.map((_, i) => i);
+  const solutions = [answer(identity), ...(spec.also ?? []).map((a) => answer(a.order ?? identity, a.states, a.rotations))];
 
   return {
     id: spec.id,
@@ -97,15 +148,15 @@ export function assemble(spec: Spec): LevelConfig {
     snapRadius: spec.snapRadius ?? 34,
     slots,
     areas: spec.areas,
-    pieces: [...fixed, ...loose],
-    rules: spec.rules,
+    pieces: [...fixed, ...loose, ...tools],
+    rules: [...spec.rules, ...(spec.also ?? []).map((a) => a.rule)],
+    wordless: spec.wordless,
     wind: spec.wind,
     decorate: spec.decorate,
     unique: spec.unique,
-    trayHeight: trayHeightFor(loose),
-    solution: spec.solved.flatMap((it, i) =>
-      given.has(i) ? [] : [{ slot: slots[i].id, piece: `p${i}`, ...(it.rotatable && { rotation: it.solvedRot ?? 0 }) }],
-    ),
+    trayHeight: loose.length + tools.length ? trayHeightFor([...loose, ...tools]) : undefined,
+    solution: solutions[0],
+    solutions,
   };
 }
 

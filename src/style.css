@@ -358,3 +358,86 @@ html, body {
 .tray-badge[hidden] { display: none; }
 /* No springy transitions while the tray is being swiped. */
 .board.is-scrolling .piece.in-tray { transition: none; }
+
+/* Grime on things that need polishing: soft blotches that fade as you rub. */
+.grime {
+  position: absolute;
+  inset: 4px;
+  border-radius: 40%;
+  pointer-events: none;
+  background:
+    radial-gradient(circle at 30% 35%, rgba(120, 96, 70, 0.75) 0 18%, transparent 30%),
+    radial-gradient(circle at 70% 60%, rgba(120, 96, 70, 0.7) 0 16%, transparent 28%),
+    radial-gradient(circle at 45% 75%, rgba(120, 96, 70, 0.6) 0 12%, transparent 24%),
+    rgba(150, 128, 100, 0.35);
+  mix-blend-mode: multiply;
+  transition: opacity 200ms ease;
+}
+/* While being turned by hand, follow the finger exactly. */
+.piece.is-spinning { transition: none; z-index: 9999 !important; }
+.piece.is-handle { cursor: pointer; }
+.piece.is-handle::after { display: none; } /* no 'given' pin on things you can still handle */
+
+/* Header hint button sits in the right-hand column. */
+.btn-hint { justify-self: end; }
+
+/* Level tiles: dots for levels with several ways to solve them. */
+.level-tile { position: relative; }
+.tile-dots {
+  position: absolute;
+  left: 0; right: 0; bottom: 3px;
+  font-size: 0.5rem;
+  letter-spacing: 1px;
+  color: var(--muted);
+}
+
+/* Hint panel: sketch under pencil scribble. */
+.hint-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 20000;
+  display: grid;
+  place-items: center;
+  padding: 16px;
+  background: rgba(91, 81, 73, 0.35);
+}
+.hint-card {
+  width: min(100%, 360px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 16px;
+  border-radius: var(--radius);
+  background: var(--surface);
+  box-shadow: 0 10px 30px var(--shadow);
+}
+.hint-text { margin: 0; text-align: center; color: var(--ink); transition: filter 200ms ease; }
+/* Words are the strongest hint: blurred until tapped. */
+.hint-text.is-hidden { filter: blur(6px); cursor: pointer; user-select: none; }
+.hint-note { margin: 0; font-size: 0.85rem; color: var(--muted); }
+.hint-sketch {
+  position: relative;
+  overflow: hidden;
+  border-radius: 12px;
+  background: #fffaf3;
+  box-shadow: inset 0 0 0 2px var(--slot-edge);
+}
+.hint-sketch canvas { position: absolute; inset: 0; touch-action: none; }
+.sketch-board { position: absolute; left: 0; top: 0; transform-origin: 0 0; }
+.sketch-slot { position: absolute; border-radius: 10px; background: var(--slot); }
+.sketch-piece { position: absolute; }
+.sketch-piece svg { display: block; }
+
+/* Second Look backdrops. */
+.area.wall { background: #f3ece2; box-shadow: none; border-radius: 12px; }
+.area.clock {
+  border-radius: 50%;
+  /* Twelve hour ticks around the rim only: the plain centre covers their inner ends. */
+  background:
+    radial-gradient(circle, #fffaf3 0 72%, transparent 73%),
+    repeating-conic-gradient(from -1deg, #cdbfae 0 2deg, transparent 2deg 30deg),
+    #fffaf3;
+  box-shadow: inset 0 0 0 6px #e6d9c6, inset 0 0 0 16px #fffaf3;
+}
+.area.wire { background: #b8ada0; box-shadow: none; border-radius: 4px; }

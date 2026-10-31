@@ -193,3 +193,102 @@ export function photoTile(row: number, col: number, n: number, size: number, sce
   return `<svg width="${size}" height="${size}" viewBox="${col * c} ${row * c} ${c} ${c}" aria-hidden="true">${SCENES[scene]}
   <rect x="${col * c}" y="${row * c}" width="${c}" height="${c}" fill="none" stroke="#fff" stroke-width="1.2"/></svg>`;
 }
+
+// ---- Objects for the "Second Look" chapter ------------------------------------
+
+/** A crayon standing upright; `len` px tall on a 150px canvas (bottom-aligned). */
+export const CRAYON_CANVAS = 150;
+export function crayon(hue: number, len: number): string {
+  const top = CRAYON_CANVAS - len;
+  const fill = `hsl(${hue} 65% 70%)`;
+  const dark = `hsl(${hue} 50% 55%)`;
+  return `<svg width="20" height="${CRAYON_CANVAS}" viewBox="0 0 20 ${CRAYON_CANVAS}" aria-hidden="true">
+  <path d="M10 ${top} L16 ${top + 12} H4 Z" fill="${dark}"/>
+  <rect x="4" y="${top + 12}" width="12" height="${len - 12}" rx="2" fill="${fill}"/>
+  <rect x="4" y="${top + 20}" width="12" height="${Math.max(8, len * 0.45)}" fill="#fff" opacity="0.35"/>
+  <rect x="4" y="${top + 22}" width="12" height="2" fill="${dark}"/></svg>`;
+}
+
+/** A pressed leaf: hue (green to red), size (px) and number of side veins. */
+export function leaf(hue: number, size: number, veins: number): string {
+  const s = size / 62;
+  const lines = Array.from({ length: veins }, (_, i) => {
+    const y = 14 + (i * 34) / Math.max(1, veins - 1);
+    return `<path d="M26 ${y + 6}L${14 + i % 2} ${y}M26 ${y + 6}L${38 - i % 2} ${y}" stroke="hsl(${hue} 40% 38%)" stroke-width="1.4" stroke-linecap="round"/>`;
+  }).join('');
+  return `<svg width="52" height="70" viewBox="0 0 52 70" aria-hidden="true"><g transform="translate(26 35) scale(${s}) translate(-26 -35)">
+  <path d="M26 4C40 16 44 34 26 60C8 34 12 16 26 4Z" fill="hsl(${hue} 55% 62%)"/>
+  <path d="M26 6V68" stroke="hsl(${hue} 40% 38%)" stroke-width="1.6"/>${lines}</g></svg>`;
+}
+
+/** A key hanging from its bow; blade `len` px with `teeth` notches. */
+export function key(hue: number, len: number, teeth: number): string {
+  const blade = 24 + len;
+  const notches = Array.from({ length: teeth }, (_, i) => `<rect x="15" y="${blade - 6 - i * 6}" width="5" height="3" rx="1" fill="hsl(${hue} 30% 62%)"/>`).join('');
+  return `<svg width="28" height="96" viewBox="0 0 28 96" aria-hidden="true">
+  <circle cx="14" cy="12" r="10" fill="hsl(${hue} 45% 72%)"/><circle cx="14" cy="12" r="4" fill="#fffaf3"/>
+  <rect x="11" y="20" width="6" height="${len + 4}" rx="2" fill="hsl(${hue} 30% 62%)"/>${notches}</svg>`;
+}
+
+/** A mug whose handle points right (dir 'R') or left ('L'). */
+export function mugFacing(colour: string, h: number, dir: 'L' | 'R'): string {
+  const body = mug(colour, h).replace(/^<svg[^>]*>|<\/svg>$/g, '');
+  const inner = dir === 'R' ? body : `<g transform="translate(36 0) scale(-1 1)">${body}</g>`;
+  return `<svg width="44" height="${MUG_CANVAS}" viewBox="0 0 44 ${MUG_CANVAS}" aria-hidden="true">${inner}</svg>`;
+}
+
+/** A coin's two faces: heads shows its value, tails a little leaf. */
+export function coinFace(v: CoinValue, face: 'H' | 'T'): string {
+  if (face === 'H') return coin(v);
+  const [d, c] = COIN[v];
+  return `<svg width="${d}" height="${d}" viewBox="0 0 ${d} ${d}" aria-hidden="true">
+  <circle cx="${d / 2}" cy="${d / 2}" r="${d / 2 - 1}" fill="${c}"/>
+  <circle cx="${d / 2}" cy="${d / 2}" r="${d / 2 - 4}" fill="none" stroke="#000" stroke-opacity="0.1"/>
+  <path d="M${d / 2} ${d * 0.25}C${d * 0.68} ${d * 0.38} ${d * 0.66} ${d * 0.6} ${d / 2} ${d * 0.75}C${d * 0.34} ${d * 0.6} ${d * 0.32} ${d * 0.38} ${d / 2} ${d * 0.25}Z" fill="#000" opacity="0.18"/></svg>`;
+}
+
+/** A framed picture: sky, sun and a hill whose horizon tilts by `tilt` degrees. */
+export function frame(w: number, h: number, sky: string, tilt = 0): string {
+  return `<svg width="${w}" height="${h}" viewBox="0 0 ${w} ${h}" aria-hidden="true">
+  <rect width="${w}" height="${h}" rx="4" fill="#c9a77f"/><rect x="5" y="5" width="${w - 10}" height="${h - 10}" fill="#fffaf3"/>
+  <svg x="9" y="9" width="${w - 18}" height="${h - 18}" viewBox="0 0 100 100" preserveAspectRatio="none">
+    <rect width="100" height="100" fill="${sky}"/><circle cx="72" cy="30" r="12" fill="#f6d38b"/>
+    <g transform="rotate(${tilt} 50 62)"><rect x="-40" y="62" width="180" height="80" fill="#a8d5c2"/></g>
+  </svg></svg>`;
+}
+
+/** A fairy-light bulb, on (glowing) or off. */
+export function bulb(hue: number, on: boolean): string {
+  const fill = on ? `hsl(${hue} 85% 72%)` : '#d9d4cc';
+  const glow = on ? `<circle cx="14" cy="26" r="13" fill="hsl(${hue} 90% 75%)" opacity="0.35"/>` : '';
+  return `<svg width="28" height="44" viewBox="0 0 28 44" aria-hidden="true">${glow}
+  <rect x="10" y="2" width="8" height="10" rx="2" fill="#8f8577"/>
+  <path d="M14 12C22 16 22 30 14 40C6 30 6 16 14 12Z" fill="${fill}"/></svg>`;
+}
+
+/** An egg with `n` speckles. */
+export function speckledEgg(colour: string, n: number): string {
+  const spots = [[11, 18], [21, 14], [16, 26], [24, 28], [10, 32], [19, 36]].slice(0, n)
+    .map(([x, y]) => `<circle cx="${x}" cy="${y}" r="1.8" fill="#6b5a4a" opacity="0.6"/>`).join('');
+  return egg(colour).replace('</svg>', `${spots}</svg>`);
+}
+
+/** A spice jar with a letter on its label. */
+export function letterJar(lid: string, h: number, letter: string): string {
+  const top = JAR_CANVAS - h;
+  const labelY = top + 6 + (h - 6) * 0.35;
+  return jar(lid, h).replace('</svg>', `<text x="16" y="${labelY + Math.max(8, (h - 6) * 0.35) / 2 + 4}" text-anchor="middle" font-size="11" ${FONT} fill="${INK}">${letter}</text></svg>`);
+}
+
+/** A clock hand pivoting at the centre of its canvas (so it turns about the pivot). */
+export function clockHand(colour = '#c98b7a'): string {
+  return `<svg width="16" height="120" viewBox="0 0 16 120" aria-hidden="true">
+  <path d="M8 12L12 60H4Z" fill="${colour}"/><circle cx="8" cy="60" r="5" fill="${INK}"/></svg>`;
+}
+
+/** The polishing cloth. */
+export function cloth(): string {
+  return `<svg width="48" height="36" viewBox="0 0 48 36" aria-hidden="true">
+  <path d="M4 8Q12 2 24 6T44 6L42 30Q30 34 20 30T6 32Z" fill="#b9d8ea"/>
+  <path d="M8 14H40M8 20H40M8 26H38" stroke="#fff" stroke-width="2" opacity="0.6"/></svg>`;
+}

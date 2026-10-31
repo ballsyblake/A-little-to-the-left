@@ -42,8 +42,8 @@ export function createTray(
   let scroll = 0;
   let scrollAtStart = 0;
 
-  /** Pieces drawn identically share a pile. */
-  const keyOf = (p: PieceState) => p.def.svg;
+  /** Pieces drawn identically (same art, same state) share a pile. */
+  const keyOf = (p: PieceState) => `${p.def.svg}|${p.state}`;
 
   /** Footprint width in px at the piece's current rotation. */
   const widthOf = (p: PieceState) => {

@@ -1,5 +1,5 @@
 // Builds the board DOM (slots + pieces) and owns the live piece state.
-import { makeDraggable, render } from './drag';
+import { makeDraggable, makeHandleable, render, showGrime, showState, type DragContext } from './drag';
 import { createTray } from './tray';
 import type { AreaDef, PieceDef, PieceState, SlotDef } from './types';
 
@@ -76,35 +76,68 @@ export function createBoard(opts: BoardOptions): Board {
     // Givens start in their slot, locked.
     const fixed = def.fixedIn ? opts.slots.find((s) => s.id === def.fixedIn) : undefined;
     if (fixed) pe.classList.add('is-fixed');
-    return {
+    if (fixed && (def.states || def.spin || def.dirt)) pe.classList.add('is-handle'); // still to work on
+    if (def.dirt) {
+      const grime = document.createElement('div');
+      grime.className = 'grime';
+      pe.append(grime);
+    }
+    const p: PieceState = {
       def, el: pe,
       x: fixed ? fixed.x : def.start.x,
       y: fixed ? fixed.y : def.start.y,
       rotation: def.start.rot ?? 0,
       slotId: fixed ? fixed.id : null,
+      state: def.start.state ?? 0,
+      dirt: def.dirt ?? 0,
     };
+    showState(p);
+    showGrime(p);
+    return p;
   });
 
   const tray = opts.trayHeight ? createTray(el, opts.trayHeight, (p) => render(p, el)) : undefined;
 
   let hot: string | null = null;
-  const unbinds = pieces.filter((p) => !p.def.fixedIn).map((p) =>
-    makeDraggable(p, {
-      board: el,
-      slots: opts.slots,
-      snapRadius: opts.snapRadius,
-      // One piece per slot (later levels can override with capacity).
-      isFree: (slot, piece) => !pieces.some((o) => o !== piece && o.slotId === slot.id),
-      setHot(id) {
-        if (id === hot) return;
-        if (hot) slotEls.get(hot)?.classList.remove('is-hot');
-        if (id) slotEls.get(id)?.classList.add('is-hot');
-        hot = id;
-      },
-      onChange: (piece, event) => opts.onChange?.(pieces, event, piece),
-      tray,
-    }),
-  );
+  // Shared context for every piece's gestures.
+  const ctx = (): DragContext => ({
+    board: el,
+    slots: opts.slots,
+    snapRadius: opts.snapRadius,
+    // One piece per slot (later levels can override with capacity).
+    isFree: (slot, piece) => !pieces.some((o) => o !== piece && o.slotId === slot.id),
+    setHot(id) {
+      if (id === hot) return;
+      if (hot) slotEls.get(hot)?.classList.remove('is-hot');
+      if (id) slotEls.get(id)?.classList.add('is-hot');
+      hot = id;
+    },
+    onChange: (piece, event) => opts.onChange?.(pieces, event, piece),
+    tray,
+    onRub,
+  });
+  const unbinds = [
+    ...pieces.filter((p) => !p.def.fixedIn).map((p) => makeDraggable(p, ctx())),
+    // Fixed pieces can still be tapped (states) or turned (spin).
+    ...pieces.filter((p) => p.def.fixedIn && (p.def.states || p.def.spin)).map((p) => makeHandleable(p, ctx())),
+  ];
+
+  // The cloth: each short stretch of rubbing over a grimy piece cleans it a bit.
+  let lastRub: { x: number; y: number } | null = null;
+  function onRub(at: { x: number; y: number }): void {
+    if (lastRub && Math.hypot(at.x - lastRub.x, at.y - lastRub.y) < 14) return;
+    lastRub = at;
+    for (const p of pieces) {
+      if (!p.dirt) continue;
+      const r = p.el.getBoundingClientRect();
+      const b = el.getBoundingClientRect();
+      const inside = at.x > r.left - b.left && at.x < r.right - b.left && at.y > r.top - b.top && at.y < r.bottom - b.top;
+      if (!inside) continue;
+      p.dirt -= 1;
+      showGrime(p);
+      if (p.dirt === 0) opts.onChange?.(pieces, 'rotate', p); // a polish can finish a level
+    }
+  }
   // Loose pieces start in the tray (laid out once the board has a size).
   let trayFilled = false;
 

@@ -1,5 +1,6 @@
 // Wires gestures on one piece to movement: lift on grab, follow the finger,
-// snap (or rest) on release, rotate on tap.
+// snap (or rest) on release, rotate or change state on tap. Also: pieces
+// fixed in place that spin or change state, and the polishing cloth.
 import { bindGestures, type Point } from './input';
 import { findSnapSlot, slotCentre } from './snap';
 import type { Tray } from './tray';
@@ -17,6 +18,32 @@ export interface DragContext {
   onChange(piece: PieceState, event: 'snap' | 'drop' | 'rotate'): void;
   /** Where loose pieces live, if the level has a tray. */
   tray?: Tray;
+  /** The cloth moved to `p` (board px): polish whatever is under it. */
+  onRub?(p: Point): void;
+}
+
+/** Show a piece's current state: swap its picture, keeping any grime layer. */
+export function showState(piece: PieceState): void {
+  const look = piece.def.states?.[piece.state];
+  if (!look) return;
+  piece.el.dataset.state = String(piece.state); // handy for tests
+  const tmp = document.createElement('div');
+  tmp.innerHTML = look.svg;
+  piece.el.firstElementChild?.replaceWith(tmp.firstElementChild!);
+}
+
+/** Grime fades as the piece is polished. */
+export function showGrime(piece: PieceState): void {
+  const g = piece.el.querySelector<HTMLElement>('.grime');
+  if (g) g.style.opacity = String(piece.def.dirt ? (piece.dirt / piece.def.dirt) * 0.85 : 0);
+}
+
+/** Tap on a piece with states: move to the next one. */
+function nextState(piece: PieceState): boolean {
+  if (!piece.def.states) return false;
+  piece.state = (piece.state + 1) % piece.def.states.length;
+  showState(piece);
+  return true;
 }
 
 /** Push a piece's state into its CSS custom properties. */
@@ -35,8 +62,9 @@ export function makeDraggable(piece: PieceState, ctx: DragContext): () => void {
   let downX = 0;
 
   const centreFrom = (p: Point): Point => ({ x: p.x - offset.x, y: p.y - offset.y });
+  // Tools never land in slots.
   const pick = (c: Point) =>
-    findSnapSlot(c, ctx.slots, board, ctx.snapRadius, (s) => ctx.isFree(s, piece));
+    piece.def.tool ? null : findSnapSlot(c, ctx.slots, board, ctx.snapRadius, (s) => ctx.isFree(s, piece));
 
   /** Pick the piece up (out of the tray or its slot); `centred` snaps it under the finger. */
   const lift = (p: Point, centred = false) => {
@@ -74,6 +102,7 @@ export function makeDraggable(piece: PieceState, ctx: DragContext): () => void {
       piece.x = c.x / board.clientWidth;
       piece.y = c.y / board.clientHeight;
       render(piece, board);
+      if (piece.def.tool === 'cloth') ctx.onRub?.(c);
       ctx.setHot(pick(c)?.id ?? null);
     },
 
@@ -103,11 +132,53 @@ export function makeDraggable(piece: PieceState, ctx: DragContext): () => void {
     },
 
     onTap() {
+      if (nextState(piece)) {
+        ctx.onChange(piece, 'rotate');
+        return;
+      }
       if (!piece.def.rotatable) return;
       // Straighten any tilt, then turn. Counting up keeps CSS spinning clockwise.
       piece.rotation = Math.round(piece.rotation / 90) * 90 + (piece.def.rotateStep ?? 90);
       if (ctx.tray?.has(piece)) ctx.tray.layout(); // its footprint may have changed
       else render(piece, board);
+      ctx.onChange(piece, 'rotate');
+    },
+  });
+}
+
+/**
+ * Pieces fixed in place that you can still handle: tap to change state,
+ * or (if `spin`) drag around them to turn them freely, like straightening
+ * a picture frame. Near-straight snaps to straight on release.
+ */
+export function makeHandleable(piece: PieceState, ctx: DragContext): () => void {
+  const { board } = ctx;
+  const centre = () => ({ x: piece.x * board.clientWidth, y: piece.y * board.clientHeight });
+  const angleTo = (p: Point) => (Math.atan2(p.y - centre().y, p.x - centre().x) * 180) / Math.PI;
+  let startAngle = 0;
+  let startRot = 0;
+
+  return bindGestures(piece.el, board, {
+    onTap() {
+      if (nextState(piece)) ctx.onChange(piece, 'rotate');
+    },
+    onDragStart(p) {
+      if (!piece.def.spin) return;
+      startAngle = angleTo(p);
+      startRot = piece.rotation;
+      piece.el.classList.add('is-spinning');
+    },
+    onDragMove(p) {
+      if (!piece.def.spin) return;
+      piece.rotation = startRot + angleTo(p) - startAngle;
+      render(piece, board);
+    },
+    onDragEnd() {
+      if (!piece.def.spin) return;
+      piece.el.classList.remove('is-spinning');
+      const straight = Math.round(piece.rotation / 90) * 90;
+      if (Math.abs(piece.rotation - straight) < 4) piece.rotation = straight; // settle
+      render(piece, board);
       ctx.onChange(piece, 'rotate');
     },
   });

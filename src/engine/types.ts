@@ -46,7 +46,7 @@ export interface PieceDef {
   /** Inline SVG markup for the object's art. */
   svg: string;
   /** Where it starts, normalised like slots; `rot` = starting tilt in degrees. */
-  start: { x: number; y: number; rot?: number };
+  start: { x: number; y: number; rot?: number; state?: number };
   props?: PieceProps;
   rotatable?: boolean;
   /** Degrees turned per tap (default 90; dominoes use 180 to flip). */
@@ -55,6 +55,14 @@ export interface PieceDef {
   fixedIn?: string;
   /** Visual size in px, used by layout checks in tests. */
   size?: { w: number; h: number };
+  /** Tap cycles through these looks; each can change the piece's props. */
+  states?: { svg: string; props?: PieceProps }[];
+  /** Grime to polish off with the cloth (number of rubs). */
+  dirt?: number;
+  /** Turned freely by dragging around its centre (straightening frames). */
+  spin?: boolean;
+  /** A tool rather than a thing to tidy: the cloth polishes what it rubs. */
+  tool?: 'cloth';
 }
 
 /** Live state of a piece on the board. */
@@ -65,6 +73,8 @@ export interface PieceState {
   y: number;
   rotation: number;    // degrees; snapped pieces sit on a multiple of 90
   slotId: string | null;
+  state: number;       // index into def.states (0 if none)
+  dirt: number;        // rubs left before it's clean (0 if none)
 }
 
 /** Read-only view of the board handed to win rules. */
@@ -99,6 +109,10 @@ export interface LevelConfig {
   rules: WinRule[];
   /** One known answer (generated levels), used by tests. */
   solution?: SolutionStep[];
+  /** A known answer for each rule (rules are the level's distinct solutions). */
+  solutions?: SolutionStep[][];
+  /** No written rule on screen: it lives in the hint, like the original game. */
+  wordless?: boolean;
   /** Logic puzzle: tests check the givens leave exactly one answer. */
   unique?: boolean;
   /** Loose pieces live in a scrolling tray of this height (px) at the bottom. */
@@ -110,4 +124,7 @@ export interface SolutionStep {
   slot: string;
   piece: string;
   rotation?: number;
+  state?: number;
+  /** Polished clean. */
+  clean?: boolean;
 }

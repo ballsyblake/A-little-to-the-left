@@ -1,5 +1,6 @@
 // Win-rule factories. Each returns a WinRule (board => boolean), so levels
 // compose them as data, e.g. rules: [orderedBy('length', 'asc'), ...].
+import { propsOf } from './props';
 import type { BoardView, PieceState, WinRule } from './types';
 
 /** Every slot holds a piece. Most rules build on this. */
@@ -24,14 +25,21 @@ export function orderedBy(prop: string, dir: 'asc' | 'desc'): WinRule {
   return (b) => {
     const ps = piecesInSlotOrder(b);
     if (!ps) return false;
-    const v = ps.map((p) => Number(p.def.props?.[prop]));
+    const v = ps.map((p) => Number(propsOf(p)[prop]));
     return v.every((x, i) => i === 0 || (dir === 'asc' ? x > v[i - 1] : x < v[i - 1]));
   };
 }
 
-/** Convenience: ordered by `prop` in either direction (two solutions). */
+/** Ordered by `prop` in either direction: one solution, read either way. */
 export function orderedEitherWay(prop: string): WinRule[] {
-  return [orderedBy(prop, 'asc'), orderedBy(prop, 'desc')];
+  return [any(orderedBy(prop, 'asc'), orderedBy(prop, 'desc'))];
+}
+
+/** Passes when at least one of the rules passes (one solution, several forms). */
+export function any(...rules: WinRule[]): WinRule {
+  return Object.assign((b: BoardView) => rules.some((r) => r(b)), {
+    possible: (b: BoardView) => rules.some((r) => !r.possible || r.possible(b)),
+  });
 }
 
 /** Passes only when every given rule passes. */
@@ -51,7 +59,7 @@ export function groupedBy(prop: string): WinRule {
     if (!allFilled(b)) return false;
     const valueOf = new Map<string, string | number>(); // group -> its value
     for (const s of b.slots) {
-      const v = b.pieceIn(s.id)!.def.props?.[prop];
+      const v = propsOf(b.pieceIn(s.id)!)[prop];
       if (v === undefined) return false;
       const g = s.group ?? s.id;
       if (!valueOf.has(g)) valueOf.set(g, v);
@@ -74,7 +82,7 @@ export const sameRotation: WinRule = (b) => {
 export function spellsOneOf(prop: string, words: string[]): WinRule {
   return (b) => {
     const ps = piecesInSlotOrder(b);
-    return !!ps && words.includes(ps.map((p) => p.def.props?.[prop]).join(''));
+    return !!ps && words.includes(ps.map((p) => propsOf(p)[prop]).join(''));
   };
 }
 
@@ -88,8 +96,8 @@ export function chainedEnds(left = 'left', right = 'right', loop = false): WinRu
     if (!ps) return false;
     const ends = ps.map((p) => {
       const turn = ((p.rotation % 360) + 360) % 360;
-      const l = p.def.props?.[left];
-      const r = p.def.props?.[right];
+      const l = propsOf(p)[left];
+      const r = propsOf(p)[right];
       if (turn === 0) return [l, r];
       if (turn === 180) return [r, l];
       return null; // sideways never counts
@@ -107,7 +115,7 @@ export function equalSums(prop: string): WinRule {
     const totals = new Map<string, number>();
     for (const s of b.slots) {
       const g = s.group ?? s.id;
-      totals.set(g, (totals.get(g) ?? 0) + Number(b.pieceIn(s.id)!.def.props?.[prop]));
+      totals.set(g, (totals.get(g) ?? 0) + Number(propsOf(b.pieceIn(s.id)!)[prop]));
     }
     return new Set(totals.values()).size === 1;
   };

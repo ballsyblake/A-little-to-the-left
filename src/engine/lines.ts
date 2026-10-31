@@ -1,10 +1,11 @@
 // Line rules: a predicate about a list of pieces ("all different",
 // "adds up to 15"...) applied to every row, column, group or diagonal.
 // Combine them with all() from rules.ts to describe logic puzzles.
+import { angleDiff, propsOf } from './props';
 import type { BoardView, PieceState, SlotDef, WinRule } from './types';
 
 // Re-exported so level files can import every rule from one place.
-export { all, chainedEnds, equalSums, sameRotation } from './rules';
+export { all, any, chainedEnds, equalSums, sameRotation } from './rules';
 
 /** One slot's content: a piece, or undefined while still empty. */
 type Cell = PieceState | undefined;
@@ -15,7 +16,7 @@ type Cell = PieceState | undefined;
  */
 export type LinePred = ((ps: PieceState[]) => boolean) & { possible?: (line: Cell[]) => boolean };
 
-const val = (p: PieceState, prop: string) => p.def.props?.[prop];
+const val = (p: PieceState, prop: string) => propsOf(p)[prop];
 const num = (p: PieceState, prop: string) => Number(val(p, prop));
 const filled = (line: Cell[]) => line.filter((p): p is PieceState => !!p);
 /** Attach an early check to a predicate. */
@@ -264,3 +265,15 @@ export const fitsOutlines: WinRule = neighbourRule((b) =>
     const norm = (r: number) => ((r % mod) + mod) % mod;
     return props && norm(p.rotation) === norm(s.wantRot);
   }));
+
+// ---- Whole-board conditions for the hands-on puzzles ----------------------
+
+/** Every piece that started grimy has been polished clean. */
+export const allClean: WinRule = (b) => b.pieces.every((p) => !p.def.dirt || p.dirt === 0);
+
+/**
+ * Every free-turning piece sits at its `angle` prop (default 0 = straight),
+ * within `tolerance` degrees.
+ */
+export const allAngled = (tolerance = 4): WinRule => (b) =>
+  b.pieces.every((p) => !p.def.spin || angleDiff(p.rotation, Number(propsOf(p).angle ?? 0)) <= tolerance);

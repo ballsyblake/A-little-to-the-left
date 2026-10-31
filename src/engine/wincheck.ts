@@ -15,3 +15,9 @@ export function isSolved(level: LevelConfig, pieces: PieceState[]): boolean {
   const view = viewOf(level, pieces);
   return level.rules.some((rule) => rule(view));
 }
+
+/** Which of the level's solutions (rule indices) the board shows right now. */
+export function passingRules(level: LevelConfig, pieces: PieceState[]): number[] {
+  const view = viewOf(level, pieces);
+  return level.rules.flatMap((rule, i) => (rule(view) ? [i] : []));
+}

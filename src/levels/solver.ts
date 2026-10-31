@@ -10,6 +10,7 @@ export function startPieces(level: LevelConfig): PieceState[] {
   return level.pieces.map((def) => ({
     def, el: {} as HTMLElement, x: def.start.x, y: def.start.y,
     rotation: def.start.rot ?? 0, slotId: def.fixedIn ?? null,
+    state: def.start.state ?? 0, dirt: def.dirt ?? 0,
   }));
 }
 
@@ -19,7 +20,8 @@ export function startPieces(level: LevelConfig): PieceState[] {
  * level needs rotation (not searched).
  */
 export function countSolutions(level: LevelConfig, limit = 2, maxNodes = 3_000_000): number | null {
-  if (level.pieces.some((p) => p.rotatable && !p.fixedIn)) return null;
+  // Only pure placement puzzles are searched (no turning, states, polishing).
+  if (level.pieces.some((p) => (p.rotatable && !p.fixedIn) || p.states || p.spin || p.dirt || p.tool)) return null;
   const pieces = startPieces(level);
   const view = viewOf(level, pieces);
   // A level is won if ANY rule passes, so a branch lives while any rule could.
