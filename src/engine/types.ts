@@ -97,6 +97,8 @@ export interface LevelConfig {
   solution?: SolutionStep[];
   /** Logic puzzle: tests check the givens leave exactly one answer. */
   unique?: boolean;
+  /** Loose pieces live in a scrolling tray of this height (px) at the bottom. */
+  trayHeight?: number;
 }
 
 /** "Put this piece in this slot, turned this far." */

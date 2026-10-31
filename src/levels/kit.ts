@@ -84,11 +84,11 @@ export function assemble(spec: Spec): LevelConfig {
   };
 
   const fixed = spec.solved.flatMap((it, i) => (given.has(i) ? [piece(it, `p${i}`, slots[i].id)] : []));
+  // Loose pieces start in the tray, in a shuffled order.
   const loose = rng.shuffle([
     ...spec.solved.flatMap((it, i) => (given.has(i) ? [] : [piece(it, `p${i}`)])),
     ...(spec.decoys ?? []).map((it, k) => piece(it, `x${k}`)),
   ]);
-  scatter(loose, slots, rng);
 
   return {
     id: spec.id,
@@ -102,34 +102,17 @@ export function assemble(spec: Spec): LevelConfig {
     wind: spec.wind,
     decorate: spec.decorate,
     unique: spec.unique,
+    trayHeight: trayHeightFor(loose),
     solution: spec.solved.flatMap((it, i) =>
       given.has(i) ? [] : [{ slot: slots[i].id, piece: `p${i}`, ...(it.rotatable && { rotation: it.solvedRot ?? 0 }) }],
     ),
   };
 }
 
-/**
- * Lay loose pieces out in tidy-ish rows below the slots, sized so they
- * don't overlap on the smallest board.
- */
-function scatter(pieces: PieceDef[], slots: SlotDef[], rng: ReturnType<typeof makeRng>): void {
-  if (!pieces.length) return;
-  const cellW = Math.max(...pieces.map((p) => p.size!.w)) + 8;
-  const cellH = Math.max(...pieces.map((p) => p.size!.h)) + 8;
-  const slotBottom = Math.max(...slots.map((s) => s.y + s.h / 2 / MIN_H));
-  const top = Math.max(0.5, slotBottom + 0.03);
-  const bottom = 0.97;
-  const perRow = Math.max(1, Math.floor((0.94 * MIN_W) / cellW));
-  const rows = Math.ceil(pieces.length / perRow);
-  const rowH = Math.min(cellH, ((bottom - top) * MIN_H) / rows);
-  pieces.forEach((p, i) => {
-    const r = Math.floor(i / perRow);
-    const inRow = Math.min(perRow, pieces.length - r * perRow);
-    const k = i % perRow;
-    const x = 0.5 + ((k - (inRow - 1) / 2) * cellW) / MIN_W;
-    const y = top + ((r + 0.5) * rowH) / MIN_H;
-    p.start = { ...p.start, x: x + rng.range(-0.008, 0.008), y: Math.min(0.95, y) };
-  });
+/** Tray tall enough for the tallest loose piece, at any rotation it may take. */
+export function trayHeightFor(pieces: PieceDef[]): number {
+  const tallest = Math.max(0, ...pieces.map((p) => (p.rotatable ? Math.max(p.size!.w, p.size!.h) : p.size!.h)));
+  return Math.max(64, tallest + 22);
 }
 
 // ---- Layouts ----------------------------------------------------------------

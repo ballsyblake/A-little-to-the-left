@@ -5,7 +5,8 @@ export interface Point { x: number; y: number }
 
 export interface GestureHandlers {
   onTap?(): void;
-  onDragStart?(p: Point): void;
+  /** `start` = where the finger went down, `now` = where it is after the slop. */
+  onDragStart?(start: Point, now: Point): void;
   onDragMove?(p: Point): void;
   onDragEnd?(p: Point): void;
 }
@@ -43,7 +44,7 @@ export function bindGestures(el: HTMLElement, board: HTMLElement, h: GestureHand
     const p = toBoard(e);
     if (!dragging && Math.hypot(p.x - start.x, p.y - start.y) > TAP_SLOP) {
       dragging = true;
-      h.onDragStart?.(start);
+      h.onDragStart?.(start, p);
     }
     if (dragging) h.onDragMove?.(p);
   };

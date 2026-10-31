@@ -325,3 +325,36 @@ html, body {
 .area.box { background: transparent; box-shadow: inset 0 0 0 2px #d8c3a8; border-radius: 10px; }
 .area.tag { background: transparent; box-shadow: none; }
 .area.tag .area-label { bottom: auto; top: 50%; transform: translateY(-50%); font-size: 0.95rem; color: var(--ink); }
+
+/* The piece tray: a soft strip along the bottom of the board. Edge shading
+   hints that it scrolls. */
+.tray {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: #f4ebde;
+  border-top: 2px solid var(--slot-edge);
+  touch-action: none;
+}
+.tray.can-scroll-left { box-shadow: inset 18px 0 14px -14px var(--shadow); }
+.tray.can-scroll-right { box-shadow: inset -18px 0 14px -14px var(--shadow); }
+.tray.can-scroll-left.can-scroll-right { box-shadow: inset 18px 0 14px -14px var(--shadow), inset -18px 0 14px -14px var(--shadow); }
+.tray-badge {
+  position: absolute;
+  z-index: 500;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 5px;
+  border-radius: 10px;
+  background: var(--ink);
+  color: #fff;
+  font-size: 0.75rem;
+  font-weight: 700;
+  line-height: 20px;
+  text-align: center;
+  pointer-events: none;
+}
+.tray-badge[hidden] { display: none; }
+/* No springy transitions while the tray is being swiped. */
+.board.is-scrolling .piece.in-tray { transition: none; }

@@ -1,5 +1,6 @@
 // Builds the board DOM (slots + pieces) and owns the live piece state.
 import { makeDraggable, render } from './drag';
+import { createTray } from './tray';
 import type { AreaDef, PieceDef, PieceState, SlotDef } from './types';
 
 export interface BoardOptions {
@@ -7,6 +8,8 @@ export interface BoardOptions {
   pieces: PieceDef[];
   areas?: AreaDef[];
   snapRadius: number;
+  /** Height in px of a piece tray along the bottom; loose pieces start in it. */
+  trayHeight?: number;
   onChange?(pieces: PieceState[], event: 'snap' | 'drop' | 'rotate', piece: PieceState): void;
 }
 
@@ -68,6 +71,7 @@ export function createBoard(opts: BoardOptions): Board {
     const pe = document.createElement('div');
     pe.className = 'piece';
     pe.innerHTML = def.svg;
+    pe.dataset.id = def.id; // handy for tests and debugging
     el.append(pe);
     // Givens start in their slot, locked.
     const fixed = def.fixedIn ? opts.slots.find((s) => s.id === def.fixedIn) : undefined;
@@ -80,6 +84,8 @@ export function createBoard(opts: BoardOptions): Board {
       slotId: fixed ? fixed.id : null,
     };
   });
+
+  const tray = opts.trayHeight ? createTray(el, opts.trayHeight, (p) => render(p, el)) : undefined;
 
   let hot: string | null = null;
   const unbinds = pieces.filter((p) => !p.def.fixedIn).map((p) =>
@@ -96,14 +102,22 @@ export function createBoard(opts: BoardOptions): Board {
         hot = id;
       },
       onChange: (piece, event) => opts.onChange?.(pieces, event, piece),
+      tray,
     }),
   );
+  // Loose pieces start in the tray (laid out once the board has a size).
+  let trayFilled = false;
 
   // Re-render on resize/rotation; normalised coords make this trivial.
   // Transitions switch on only after the first placement, so pieces appear
   // in place instead of gliding in from the board's corner.
   const ro = new ResizeObserver(() => {
-    pieces.forEach((p) => render(p, el));
+    if (tray && !trayFilled) {
+      trayFilled = true;
+      pieces.filter((p) => !p.def.fixedIn).forEach((p) => tray.add(p));
+    }
+    pieces.filter((p) => !tray?.has(p)).forEach((p) => render(p, el));
+    tray?.layout();
     requestAnimationFrame(() => el.classList.add('is-ready'));
   });
   ro.observe(el);
@@ -123,6 +137,7 @@ export function createBoard(opts: BoardOptions): Board {
     },
     destroy() {
       ro.disconnect();
+      tray?.destroy();
       unbinds.forEach((u) => u());
       el.remove();
     },

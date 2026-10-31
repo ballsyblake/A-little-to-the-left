@@ -37,6 +37,7 @@ export function showGame(app: HTMLElement, opts: GameScreenOptions): () => void 
     pieces: level.pieces,
     areas: level.areas,
     snapRadius: level.snapRadius,
+    trayHeight: level.trayHeight,
     onChange(pieces, event, piece) {
       if (event === 'snap') {
         haptic(10);
